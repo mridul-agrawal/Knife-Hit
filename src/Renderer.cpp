@@ -16,10 +16,52 @@ bool Renderer::initialize() {
         std::cout << "Renderer could not be created! Error: " << SDL_GetError() << std::endl;
         return false;
     }
+
+    // Initialize TTF
+    if (!TTF_Init()) {
+        std::cout << "TTF_Init failed: " << SDL_GetError() << std::endl;
+        return false;
+    }
+
+    // Load fonts (trying system font first as fallback)
+    titleFont = TTF_OpenFont("C:/Windows/Fonts/arial.ttf", 28);
+    if (!titleFont) {
+        std::cout << "Warning: Could not load title font, using fallback" << std::endl;
+        titleFont = nullptr;
+    }
+
+    uiFont = TTF_OpenFont("C:/Windows/Fonts/arial.ttf", 20);
+    if (!uiFont) {
+        std::cout << "Warning: Could not load UI font, using fallback" << std::endl;
+        uiFont = nullptr;
+    }
+
+    numberFont = TTF_OpenFont("C:/Windows/Fonts/arial.ttf", 24);
+    if (!numberFont) {
+        std::cout << "Warning: Could not load number font, using fallback" << std::endl;
+        numberFont = nullptr;
+    }
+
     return true;
 }
 
 void Renderer::cleanup() {
+    // Clean up fonts
+    if (titleFont) {
+        TTF_CloseFont(titleFont);
+        titleFont = nullptr;
+    }
+    if (uiFont) {
+        TTF_CloseFont(uiFont);
+        uiFont = nullptr;
+    }
+    if (numberFont) {
+        TTF_CloseFont(numberFont);
+        numberFont = nullptr;
+    }
+
+    TTF_Quit();
+
     if (renderer) {
         SDL_DestroyRenderer(renderer);
         renderer = nullptr;
@@ -116,23 +158,19 @@ void Renderer::renderMenu() {
     setColor(GameConstants::Colors::DARK_BLUE);
     SDL_RenderClear(renderer);
 
-    setColor(GameConstants::Colors::WHITE);
-
-    // Center the text properly
     int centerX = GameConstants::SCREEN_WIDTH / 2;
 
-    // "KNIFE HIT" - 9 characters * 20 pixels = 180 pixels wide
-    drawText("KNIFE HIT", centerX - 90, 200);
+    // Use TTF for title text
+    drawTTFTextCentered("KNIFE HIT", centerX, 180, titleFont, GameConstants::Colors::WHITE);
 
-    // "CLICK TO START" - 14 characters * 20 pixels = 280 pixels wide  
-    drawText("CLICK TO START", centerX - 140, 350);
+    // Use TTF for subtitle
+    drawTTFTextCentered("CLICK TO START", centerX, 320, uiFont, GameConstants::Colors::WHITE);
 
-    // Draw sample target
-    setColor(GameConstants::Colors::WOOD);
+    // Draw sample target (keep existing)
     Target sampleTarget;
     drawTarget(sampleTarget);
 
-    // Draw sample knife
+    // Draw sample knife (keep existing)
     drawKnife(centerX, GameConstants::KNIFE_START_Y);
 
     SDL_RenderPresent(renderer);
@@ -143,26 +181,25 @@ void Renderer::renderGame(const Target& target, const Knife& currentKnife, int k
     setColor(GameConstants::Colors::BLACK);
     SDL_RenderClear(renderer);
 
-    // Draw target
+    // Draw target (keep existing)
     drawTarget(target);
 
-    // Draw current knife
+    // Draw current knife (keep existing)
     if (currentKnife.isKnifeActive()) {
         drawKnife(currentKnife.getX(), currentKnife.getY());
     }
 
-    // Draw UI
-    setColor(GameConstants::Colors::WHITE);
-    drawText("LEVEL:", GameConstants::UI_MARGIN, GameConstants::UI_MARGIN);
-    drawNumber(level, GameConstants::UI_MARGIN + 120, GameConstants::UI_MARGIN);
+    // Draw UI with TTF fonts
+    drawTTFText("LEVEL:", GameConstants::UI_MARGIN, GameConstants::UI_MARGIN, uiFont, GameConstants::Colors::WHITE);
+    drawTTFText(std::to_string(level), GameConstants::UI_MARGIN + 80, GameConstants::UI_MARGIN, numberFont, GameConstants::Colors::WHITE);
 
-    drawText("SCORE:", GameConstants::UI_MARGIN, GameConstants::UI_MARGIN + GameConstants::UI_LINE_HEIGHT);
-    drawNumber(score, GameConstants::UI_MARGIN + 120, GameConstants::UI_MARGIN + GameConstants::UI_LINE_HEIGHT);
+    drawTTFText("SCORE:", GameConstants::UI_MARGIN, GameConstants::UI_MARGIN + GameConstants::UI_LINE_HEIGHT, uiFont, GameConstants::Colors::WHITE);
+    drawTTFText(std::to_string(score), GameConstants::UI_MARGIN + 80, GameConstants::UI_MARGIN + GameConstants::UI_LINE_HEIGHT, numberFont, GameConstants::Colors::WHITE);
 
-    drawText("KNIVES:", GameConstants::UI_MARGIN, GameConstants::UI_MARGIN + GameConstants::UI_LINE_HEIGHT * 2);
-    drawNumber(knivesLeft, GameConstants::UI_MARGIN + 140, GameConstants::UI_MARGIN + GameConstants::UI_LINE_HEIGHT * 2);
+    drawTTFText("KNIVES:", GameConstants::UI_MARGIN, GameConstants::UI_MARGIN + GameConstants::UI_LINE_HEIGHT * 2, uiFont, GameConstants::Colors::WHITE);
+    drawTTFText(std::to_string(knivesLeft), GameConstants::UI_MARGIN + 100, GameConstants::UI_MARGIN + GameConstants::UI_LINE_HEIGHT * 2, numberFont, GameConstants::Colors::WHITE);
 
-    // Draw knife indicators at bottom
+    // Draw knife indicators at bottom (keep existing)
     for (int i = 0; i < knivesLeft; i++) {
         float x = GameConstants::SCREEN_WIDTH / 2 - (knivesLeft * 15) + i * 30;
         drawKnife(x, GameConstants::SCREEN_HEIGHT - 80);
@@ -177,14 +214,11 @@ void Renderer::renderGameOver(int score) {
 
     int centerX = GameConstants::SCREEN_WIDTH / 2;
 
-    setColor(GameConstants::Colors::RED);
-    drawText("GAME OVER", centerX - 90, 250);
+    drawTTFTextCentered("GAME OVER", centerX, 220, titleFont, GameConstants::Colors::RED);
 
-    setColor(GameConstants::Colors::WHITE);
-    drawText("SCORE:", centerX - 60, 300);
-    drawNumber(score, centerX + 20, 300);
+    drawTTFTextCentered("SCORE: " + std::to_string(score), centerX, 280, uiFont, GameConstants::Colors::WHITE);
 
-    drawText("CLICK TO RESTART", centerX - 160, 400);
+    drawTTFTextCentered("CLICK TO RESTART", centerX, 380, uiFont, GameConstants::Colors::WHITE);
 
     SDL_RenderPresent(renderer);
 }
@@ -195,17 +229,13 @@ void Renderer::renderLevelComplete(int level, int score) {
 
     int centerX = GameConstants::SCREEN_WIDTH / 2;
 
-    setColor(GameConstants::Colors::GREEN);
-    drawText("LEVEL COMPLETE", centerX - 130, 250);
+    drawTTFTextCentered("LEVEL COMPLETE", centerX, 220, titleFont, GameConstants::Colors::GREEN);
 
-    setColor(GameConstants::Colors::WHITE);
-    drawText("LEVEL:", centerX - 60, 300);
-    drawNumber(level, centerX + 20, 300);
+    drawTTFTextCentered("LEVEL: " + std::to_string(level), centerX, 280, uiFont, GameConstants::Colors::WHITE);
 
-    drawText("SCORE:", centerX - 60, 350);
-    drawNumber(score, centerX + 20, 350);
+    drawTTFTextCentered("SCORE: " + std::to_string(score), centerX, 320, uiFont, GameConstants::Colors::WHITE);
 
-    drawText("CLICK TO CONTINUE", centerX - 160, 450);
+    drawTTFTextCentered("CLICK TO CONTINUE", centerX, 420, uiFont, GameConstants::Colors::WHITE);
 
     SDL_RenderPresent(renderer);
 }
@@ -456,4 +486,53 @@ void Renderer::drawCharacter(char c, int x, int y) {
         SDL_RenderLine(renderer, x, y + 20, x, y);           // Left
         break;
     }
+}
+
+void Renderer::drawTTFText(const std::string& text, int x, int y, TTF_Font* font, const GameConstants::Colors::Color& color) {
+    if (!font) {
+        // Fallback to your existing character drawing
+        setColor(color);
+        drawText(text, x, y);
+        return;
+    }
+
+    SDL_Color sdlColor = { color.r, color.g, color.b, color.a };
+    SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), 0, sdlColor);
+    if (!surface) return;
+
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_DestroySurface(surface);
+    if (!texture) return;
+
+    float width, height;
+    SDL_GetTextureSize(texture, &width, &height);
+    SDL_FRect destRect = { (float)x, (float)y, (float)width, (float)height };
+
+    SDL_RenderTexture(renderer, texture, nullptr, &destRect);
+    SDL_DestroyTexture(texture);
+}
+
+void Renderer::drawTTFTextCentered(const std::string& text, int centerX, int y, TTF_Font* font, const GameConstants::Colors::Color& color) {
+    if (!font) {
+        // Fallback to your existing character drawing
+        setColor(color);
+        int textWidth = text.length() * GameConstants::CHARACTER_WIDTH;
+        drawText(text, centerX - textWidth / 2, y);
+        return;
+    }
+
+    SDL_Color sdlColor = { color.r, color.g, color.b, color.a };
+    SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), 0, sdlColor);
+    if (!surface) return;
+
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_DestroySurface(surface);
+    if (!texture) return;
+
+    float width, height;
+    SDL_GetTextureSize(texture, &width, &height);
+    SDL_FRect destRect = { (float)(centerX - width / 2), (float)y, (float)width, (float)height };
+
+    SDL_RenderTexture(renderer, texture, nullptr, &destRect);
+    SDL_DestroyTexture(texture);
 }

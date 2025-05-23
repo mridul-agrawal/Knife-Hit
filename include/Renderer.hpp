@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
 #include <string>
 #include "Knife.hpp"
 #include "Target.hpp"
@@ -27,6 +28,13 @@ private:
     void drawCharacter(char c, int x, int y);
     void setColor(const GameConstants::Colors::Color& color);
 
+    void drawTTFText(const std::string& text, int x, int y, TTF_Font* font, const GameConstants::Colors::Color& color = GameConstants::Colors::WHITE);
+    void drawTTFTextCentered(const std::string& text, int centerX, int y, TTF_Font* font, const GameConstants::Colors::Color& color = GameConstants::Colors::WHITE);
+
     SDL_Window* window;
     SDL_Renderer* renderer;
+
+    TTF_Font* titleFont;   // For big text like "KNIFE HIT"
+    TTF_Font* uiFont;      // For UI text like "LEVEL:", "SCORE:"
+    TTF_Font* numberFont;  // For numbers
 };
