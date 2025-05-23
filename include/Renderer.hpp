@@ -21,9 +21,10 @@ public:
     void renderLevelComplete(int level, int score);
 
 private:
-    void drawKnife(float x, float y, float angle = 0);
+    void drawKnife(float x, float y, float angle = 0, float scale = 1.0f);
     void drawTarget(const Target& target);
     void setColor(const GameConstants::Colors::Color& color);
+    void drawGradientBackground();
 
     void drawTTFText(const std::string& text, int x, int y, TTF_Font* font, const GameConstants::Colors::Color& color = GameConstants::Colors::WHITE);
     void drawTTFTextCentered(const std::string& text, int centerX, int y, TTF_Font* font, const GameConstants::Colors::Color& color = GameConstants::Colors::WHITE);
@@ -32,6 +33,6 @@ private:
     SDL_Renderer* renderer;
 
     TTF_Font* titleFont;   // For big text like "KNIFE HIT"
-    TTF_Font* uiFont;      // For UI text like "LEVEL:", "SCORE:"
+    TTF_Font* uiFont;      // For UI text like "STAGE:", "SCORE:"
     TTF_Font* numberFont;  // For numbers
 };

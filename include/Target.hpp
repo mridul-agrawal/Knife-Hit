@@ -10,6 +10,9 @@ public:
     void reset(int level);
     void addStuckKnife(float angle, float distance);
 
+    // Add this method for setting position
+    void setPosition(float newX, float newY) { x = newX; y = newY; }
+
     float getX() const { return x; }
     float getY() const { return y; }
     float getRadius() const { return radius; }

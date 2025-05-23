@@ -25,14 +25,18 @@ bool Game::initialize() {
         return false;
     }
 
-    window = SDL_CreateWindow("Knife Throw - SDL3 Game",
-        GameConstants::SCREEN_WIDTH, GameConstants::SCREEN_HEIGHT,
-        SDL_WINDOW_RESIZABLE);
+    window = SDL_CreateWindow("Knife Hit",
+        GameConstants::SCREEN_WIDTH,
+        GameConstants::SCREEN_HEIGHT,
+        SDL_WINDOW_HIGH_PIXEL_DENSITY);
 
     if (!window) {
         std::cout << "Window could not be created! Error: " << SDL_GetError() << std::endl;
         return false;
     }
+
+    // Set window to centered position
+    SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 
     renderer = new Renderer(window);
     if (!renderer->initialize()) {
