@@ -23,9 +23,6 @@ public:
 private:
     void drawKnife(float x, float y, float angle = 0);
     void drawTarget(const Target& target);
-    void drawText(const std::string& text, int x, int y);
-    void drawNumber(int num, int x, int y);
-    void drawCharacter(char c, int x, int y);
     void setColor(const GameConstants::Colors::Color& color);
 
     void drawTTFText(const std::string& text, int x, int y, TTF_Font* font, const GameConstants::Colors::Color& color = GameConstants::Colors::WHITE);
