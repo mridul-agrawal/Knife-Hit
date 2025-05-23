@@ -1,15 +1,8 @@
-#define _USE_MATH_DEFINES
 #include "../include/Knife.hpp"
-#include <cmath>
-
-// Game constants
-const float KNIFE_SPEED = 800.0f;
-const int SCREEN_WIDTH = 400;
-const int SCREEN_HEIGHT = 600;
 
 Knife::Knife()
-    : x(SCREEN_WIDTH / 2)
-    , y(SCREEN_HEIGHT - 150)
+    : x(GameConstants::TARGET_X)
+    , y(GameConstants::KNIFE_START_Y)
     , velY(0)
     , isStuck(false)
     , isActive(true)
@@ -24,8 +17,8 @@ void Knife::update(float deltaTime) {
 }
 
 void Knife::reset() {
-    x = SCREEN_WIDTH / 2;
-    y = SCREEN_HEIGHT - 150;
+    x = GameConstants::TARGET_X;
+    y = GameConstants::KNIFE_START_Y;
     velY = 0;
     isStuck = false;
     isActive = true;

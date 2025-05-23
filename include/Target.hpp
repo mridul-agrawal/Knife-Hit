@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include "GameConstants.hpp"
 
 class Target {
 public:
@@ -8,7 +9,7 @@ public:
     void update(float deltaTime);
     void reset(int level);
     void addStuckKnife(float angle, float distance);
-    
+
     float getX() const { return x; }
     float getY() const { return y; }
     float getRadius() const { return radius; }
@@ -23,4 +24,4 @@ private:
     float rotationSpeed;
     std::vector<float> stuckKnifeAngles;
     std::vector<float> stuckKnifeDistances;
-}; 
+};

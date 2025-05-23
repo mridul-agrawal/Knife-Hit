@@ -1,16 +1,12 @@
 #include "../include/Target.hpp"
 #include <random>
 
-// Game constants
-const int SCREEN_WIDTH = 400;
-const float TARGET_RADIUS = 80.0f;
-
 Target::Target()
-    : x(SCREEN_WIDTH / 2)
-    , y(300)
-    , radius(TARGET_RADIUS)
+    : x(GameConstants::TARGET_X)
+    , y(GameConstants::TARGET_Y)
+    , radius(GameConstants::TARGET_RADIUS)
     , rotation(0)
-    , rotationSpeed(60.0f) {
+    , rotationSpeed(GameConstants::BASE_ROTATION_SPEED) {
 }
 
 void Target::update(float deltaTime) {
@@ -21,29 +17,29 @@ void Target::update(float deltaTime) {
 
 void Target::reset(int level) {
     rotation = 0;
-    rotationSpeed = 30.0f + (level * 15.0f);
-    
-    if (level > 3) {
+    rotationSpeed = GameConstants::BASE_ROTATION_SPEED + (level * GameConstants::ROTATION_SPEED_INCREMENT);
+
+    if (level > GameConstants::LEVEL_FOR_REVERSE_ROTATION) {
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_int_distribution<> dis(0, 1);
         rotationSpeed *= (dis(gen) == 0) ? 1 : -1; // Random direction
     }
-    
+
     stuckKnifeAngles.clear();
     stuckKnifeDistances.clear();
-    
+
     // Add some pre-stuck knives for higher levels
     if (level > 1) {
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_real_distribution<float> angleDist(0, 360);
-        
-        int preStuckKnives = std::min(level - 1, 4);
+
+        int preStuckKnives = std::min(level - 1, GameConstants::MAX_PRE_STUCK_KNIVES);
         for (int i = 0; i < preStuckKnives; i++) {
             float angle = angleDist(gen);
             stuckKnifeAngles.push_back(angle);
-            stuckKnifeDistances.push_back(radius + 30);
+            stuckKnifeDistances.push_back(GameConstants::TARGET_HIT_DISTANCE);
         }
     }
 }

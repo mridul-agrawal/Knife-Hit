@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL3/SDL.h>
+#include "GameConstants.hpp"
 
 class Knife {
 public:
@@ -8,7 +9,7 @@ public:
     void update(float deltaTime);
     void reset();
     void stick(float targetX, float targetY, float targetRotation);
-    
+
     float getX() const { return x; }
     float getY() const { return y; }
     bool isKnifeStuck() const { return isStuck; }
@@ -25,5 +26,4 @@ private:
     bool isActive;
     float stuckAngle;
     float distanceFromCenter;
-}; 
-
+};

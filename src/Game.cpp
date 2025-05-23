@@ -1,19 +1,14 @@
-#define _USE_MATH_DEFINES
 #include "../include/Game.hpp"
+#include "../include/GameConstants.hpp"
 #include <iostream>
 #include <cmath>
-
-const int SCREEN_WIDTH = 400;
-const int SCREEN_HEIGHT = 600;
-const int KNIVES_PER_LEVEL = 8;
-const float KNIFE_SPEED = 800.0f;
 
 Game::Game()
     : window(nullptr)
     , renderer(nullptr)
     , currentState(GameState::MENU)
     , level(1)
-    , knivesLeft(KNIVES_PER_LEVEL)
+    , knivesLeft(GameConstants::KNIVES_PER_LEVEL)
     , score(0)
     , canThrow(true)
     , lastTime(0)
@@ -31,7 +26,7 @@ bool Game::initialize() {
     }
 
     window = SDL_CreateWindow("Knife Throw - SDL3 Game",
-        SCREEN_WIDTH, SCREEN_HEIGHT,
+        GameConstants::SCREEN_WIDTH, GameConstants::SCREEN_HEIGHT,
         SDL_WINDOW_RESIZABLE);
 
     if (!window) {
@@ -119,7 +114,6 @@ void Game::update(float deltaTime) {
     if (currentState != GameState::PLAYING) return;
 
     gameTime += deltaTime;
-
     target.update(deltaTime);
     currentKnife.update(deltaTime);
 
@@ -127,7 +121,9 @@ void Game::update(float deltaTime) {
         float distToTarget = sqrt(pow(currentKnife.getX() - target.getX(), 2) +
             pow(currentKnife.getY() - target.getY(), 2));
 
-        if (distToTarget <= target.getRadius() + 30 && currentKnife.getY() <= target.getY() + target.getRadius()) {
+        if (distToTarget <= GameConstants::TARGET_HIT_DISTANCE &&
+            currentKnife.getY() <= target.getY() + target.getRadius()) {
+
             if (checkKnifeCollision()) {
                 currentState = GameState::GAME_OVER;
                 return;
@@ -142,7 +138,7 @@ void Game::update(float deltaTime) {
             target.addStuckKnife(angle, distToTarget);
 
             currentKnife = Knife();
-            score += 10;
+            score += GameConstants::POINTS_PER_KNIFE;
             canThrow = true;
 
             if (knivesLeft <= 0) {
@@ -161,7 +157,8 @@ bool Game::checkKnifeCollision() {
     const auto& stuckAngles = target.getStuckKnifeAngles();
     for (float stuckAngle : stuckAngles) {
         float angleDiff = std::abs(knifeAngle - stuckAngle);
-        if (angleDiff <= 10 || angleDiff >= 350) {
+        if (angleDiff <= GameConstants::COLLISION_THRESHOLD / 2 ||
+            angleDiff >= 360 - GameConstants::COLLISION_THRESHOLD / 2) {
             return true;
         }
     }
@@ -169,7 +166,7 @@ bool Game::checkKnifeCollision() {
 }
 
 void Game::throwKnife() {
-    currentKnife.setVelocityY(-KNIFE_SPEED);
+    currentKnife.setVelocityY(-GameConstants::KNIFE_SPEED);
     currentKnife.setActive(true);
     canThrow = false;
     knivesLeft--;
@@ -178,7 +175,7 @@ void Game::throwKnife() {
 void Game::initializeLevel() {
     target.reset(level);
     currentKnife = Knife();
-    knivesLeft = KNIVES_PER_LEVEL;
+    knivesLeft = GameConstants::KNIVES_PER_LEVEL;
     canThrow = true;
 }
 
