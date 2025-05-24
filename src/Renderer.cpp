@@ -107,82 +107,40 @@ void Renderer::renderKnife(const Knife& knife, bool useRotation) {
 
     float x = knife.getX();
     float y = knife.getY();
-    float rotation = useRotation ? knife.getRotation() : 0.0f;
 
-    if (useRotation && knife.isKnifeStuck()) {
-        // Render rotated knife (for stuck knives)
-        float rad = rotation * M_PI / 180.0f;
-        float cosR = cos(rad);
-        float sinR = sin(rad);
+    // FIXED: Render all knives the same way - simple upright knife
+    // Handle
+    SDL_SetRenderDrawColor(renderer, 139, 69, 19, 255);
+    SDL_FRect handleRect = {
+        x - GameConstants::KNIFE_WIDTH / 2,
+        y + GameConstants::KNIFE_LENGTH / 3,
+        static_cast<float>(GameConstants::KNIFE_WIDTH),
+        static_cast<float>(GameConstants::KNIFE_LENGTH / 3)
+    };
+    SDL_RenderFillRect(renderer, &handleRect);
 
-        // Handle vertices
-        float handleLen = GameConstants::KNIFE_LENGTH / 3;
-        float handleWidth = GameConstants::KNIFE_WIDTH;
-
-        // Handle rectangle (rotated)
-        float hx1 = -handleWidth / 2 * cosR - (-handleLen / 2) * sinR;
-        float hy1 = -handleWidth / 2 * sinR + (-handleLen / 2) * cosR;
-        float hx2 = handleWidth / 2 * cosR - (-handleLen / 2) * sinR;
-        float hy2 = handleWidth / 2 * sinR + (-handleLen / 2) * cosR;
-        float hx3 = handleWidth / 2 * cosR - handleLen / 2 * sinR;
-        float hy3 = handleWidth / 2 * sinR + handleLen / 2 * cosR;
-        float hx4 = -handleWidth / 2 * cosR - handleLen / 2 * sinR;
-        float hy4 = -handleWidth / 2 * sinR + handleLen / 2 * cosR;
-
-        // Draw handle (simplified as lines)
-        SDL_SetRenderDrawColor(renderer, 139, 69, 19, 255);
-        SDL_RenderLine(renderer, x + hx1, y + hy1, x + hx2, y + hy2);
-        SDL_RenderLine(renderer, x + hx2, y + hy2, x + hx3, y + hy3);
-        SDL_RenderLine(renderer, x + hx3, y + hy3, x + hx4, y + hy4);
-        SDL_RenderLine(renderer, x + hx4, y + hy4, x + hx1, y + hy1);
-
-        // Blade (pointing outward from center)
-        float bladeLen = GameConstants::KNIFE_LENGTH * 2 / 3;
-        float bx1 = -handleWidth / 4 * cosR - handleLen / 2 * sinR;
-        float by1 = -handleWidth / 4 * sinR + handleLen / 2 * cosR;
-        float bx2 = handleWidth / 4 * cosR - handleLen / 2 * sinR;
-        float by2 = handleWidth / 4 * sinR + handleLen / 2 * cosR;
-        float bx3 = 0 * cosR - (handleLen / 2 + bladeLen) * sinR;
-        float by3 = 0 * sinR + (handleLen / 2 + bladeLen) * cosR;
-
-        SDL_SetRenderDrawColor(renderer, 192, 192, 192, 255);
-        SDL_RenderLine(renderer, x + bx1, y + by1, x + bx2, y + by2);
-        SDL_RenderLine(renderer, x + bx2, y + by2, x + bx3, y + by3);
-        SDL_RenderLine(renderer, x + bx3, y + by3, x + bx1, y + by1);
-    }
-    else {
-        // Render normal upright knife (for flying knife)
-        SDL_SetRenderDrawColor(renderer, 139, 69, 19, 255);
-        SDL_FRect handleRect = {
-            x - GameConstants::KNIFE_WIDTH / 2,
-            y + GameConstants::KNIFE_LENGTH / 3,
-            static_cast<float>(GameConstants::KNIFE_WIDTH),
-            static_cast<float>(GameConstants::KNIFE_LENGTH / 3)
-        };
-        SDL_RenderFillRect(renderer, &handleRect);
-
-        SDL_SetRenderDrawColor(renderer, 192, 192, 192, 255);
-        SDL_FRect bladeRect = {
-            x - GameConstants::KNIFE_WIDTH / 2,
-            y - GameConstants::KNIFE_LENGTH / 3,
-            static_cast<float>(GameConstants::KNIFE_WIDTH),
-            static_cast<float>(GameConstants::KNIFE_LENGTH * 2 / 3)
-        };
-        SDL_RenderFillRect(renderer, &bladeRect);
-    }
+    // Blade
+    SDL_SetRenderDrawColor(renderer, 192, 192, 192, 255);
+    SDL_FRect bladeRect = {
+        x - GameConstants::KNIFE_WIDTH / 2,
+        y - GameConstants::KNIFE_LENGTH / 3,
+        static_cast<float>(GameConstants::KNIFE_WIDTH),
+        static_cast<float>(GameConstants::KNIFE_LENGTH * 2 / 3)
+    };
+    SDL_RenderFillRect(renderer, &bladeRect);
 }
 
 void Renderer::renderKnives(const std::vector<Knife>& knives) {
-    // Render all stuck knives with rotation
+    // Render all stuck knives the same way as flying knives
     for (const auto& knife : knives) {
         if (knife.isKnifeStuck()) {
-            renderKnife(knife, true);  // Use rotation for stuck knives
+            renderKnife(knife, false);  // FIXED: Don't use rotation, render normally
         }
     }
 }
 
 void Renderer::renderKnifeIndicators(int knivesLeft) {
-    // Draw remaining knife indicators at the bottom left
+    // Draw remaining knife indicators at the bottom left (rotated 45 degrees)
     float startX = 30.0f;
     float startY = GameConstants::KNIFE_INDICATOR_Y;
 
@@ -190,30 +148,48 @@ void Renderer::renderKnifeIndicators(int knivesLeft) {
         float knifeX = startX;
         float knifeY = startY - (i * GameConstants::KNIFE_INDICATOR_SPACING);
 
-        // Draw small knife indicators
+        // Draw small knife indicators rotated 45 degrees like original
         float scale = GameConstants::KNIFE_INDICATOR_SCALE;
         float width = GameConstants::KNIFE_WIDTH * scale;
         float length = GameConstants::KNIFE_LENGTH * scale;
 
-        // Handle
-        SDL_SetRenderDrawColor(renderer, 139, 69, 19, 255);
-        SDL_FRect handleRect = {
-            knifeX - width / 2,
-            knifeY + length / 3,
-            width,
-            length / 3
-        };
-        SDL_RenderFillRect(renderer, &handleRect);
+        // 45 degree rotation
+        float angle = 45.0f * M_PI / 180.0f;
+        float cosA = cos(angle);
+        float sinA = sin(angle);
 
-        // Blade
+        // Handle vertices (rotated)
+        float handleLen = length / 3;
+        float hx1 = (-width / 2) * cosA - (-handleLen / 2) * sinA;
+        float hy1 = (-width / 2) * sinA + (-handleLen / 2) * cosA;
+        float hx2 = (width / 2) * cosA - (-handleLen / 2) * sinA;
+        float hy2 = (width / 2) * sinA + (-handleLen / 2) * cosA;
+        float hx3 = (width / 2) * cosA - (handleLen / 2) * sinA;
+        float hy3 = (width / 2) * sinA + (handleLen / 2) * cosA;
+        float hx4 = (-width / 2) * cosA - (handleLen / 2) * sinA;
+        float hy4 = (-width / 2) * sinA + (handleLen / 2) * cosA;
+
+        // Draw handle
+        SDL_SetRenderDrawColor(renderer, 139, 69, 19, 255);
+        SDL_RenderLine(renderer, knifeX + hx1, knifeY + hy1, knifeX + hx2, knifeY + hy2);
+        SDL_RenderLine(renderer, knifeX + hx2, knifeY + hy2, knifeX + hx3, knifeY + hy3);
+        SDL_RenderLine(renderer, knifeX + hx3, knifeY + hy3, knifeX + hx4, knifeY + hy4);
+        SDL_RenderLine(renderer, knifeX + hx4, knifeY + hy4, knifeX + hx1, knifeY + hy1);
+
+        // Blade vertices (rotated)
+        float bladeLen = length * 2 / 3;
+        float bx1 = (-width / 4) * cosA - (handleLen / 2) * sinA;
+        float by1 = (-width / 4) * sinA + (handleLen / 2) * cosA;
+        float bx2 = (width / 4) * cosA - (handleLen / 2) * sinA;
+        float by2 = (width / 4) * sinA + (handleLen / 2) * cosA;
+        float bx3 = 0 * cosA - (handleLen / 2 + bladeLen) * sinA;
+        float by3 = 0 * sinA + (handleLen / 2 + bladeLen) * cosA;
+
+        // Draw blade
         SDL_SetRenderDrawColor(renderer, 192, 192, 192, 255);
-        SDL_FRect bladeRect = {
-            knifeX - width / 2,
-            knifeY - length / 3,
-            width,
-            length * 2 / 3
-        };
-        SDL_RenderFillRect(renderer, &bladeRect);
+        SDL_RenderLine(renderer, knifeX + bx1, knifeY + by1, knifeX + bx2, knifeY + by2);
+        SDL_RenderLine(renderer, knifeX + bx2, knifeY + by2, knifeX + bx3, knifeY + by3);
+        SDL_RenderLine(renderer, knifeX + bx3, knifeY + by3, knifeX + bx1, knifeY + by1);
     }
 }
 
@@ -297,16 +273,7 @@ void Renderer::renderHUD(int level, int score) {
     renderText(stageText, 80, 40,
         { 255, 255, 255, 255 }, true, FontManager::UI_FONT);
 
-    // Apple icon placeholder
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-    SDL_FRect appleRect = {
-        static_cast<float>(GameConstants::SCREEN_WIDTH - 150),
-        static_cast<float>(25),
-        30, 30
-    };
-    SDL_RenderFillRect(renderer, &appleRect);
-
-    // Score number
+    // Score number (removed apple)
     renderText(std::to_string(score),
         GameConstants::SCREEN_WIDTH - 100, 40,
         { 255, 255, 255, 255 }, true, FontManager::SCORE_FONT);

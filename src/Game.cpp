@@ -66,12 +66,15 @@ void Game::handleEvents() {
     while (SDL_PollEvent(&e)) {
         switch (e.type) {
         case SDL_EVENT_QUIT:
-            currentState = GameState::GAME_OVER;
+            // FIXED: Properly exit the game
+            cleanup();
+            exit(0);
             break;
 
         case SDL_EVENT_KEY_DOWN:
             if (e.key.key == SDLK_ESCAPE) {
-                currentState = GameState::GAME_OVER;
+                cleanup();
+                exit(0);
             }
             break;
 
@@ -95,7 +98,7 @@ void Game::handleInput() {
         break;
 
     case GameState::PLAYING:
-        if (canThrow && knivesLeft > 0) {
+        if (canThrow && knivesLeft > 0 && !currentKnife.isKnifeStuck()) {
             throwKnife();
         }
         break;
@@ -129,32 +132,36 @@ void Game::update(float deltaTime) {
     updateStuckKnives();
 
     if (currentKnife.isKnifeActive() && !currentKnife.isKnifeStuck()) {
-        float distToTarget = sqrt(pow(currentKnife.getX() - target.getX(), 2) +
-            pow(currentKnife.getY() - target.getY(), 2));
+        // FIXED: Check if knife tip reaches the edge of target
+        float knifeBottom = currentKnife.getY() + GameConstants::KNIFE_LENGTH / 2;
+        float targetEdge = target.getY() + target.getRadius();
 
-        if (distToTarget <= GameConstants::TARGET_HIT_DISTANCE &&
-            currentKnife.getY() <= target.getY() + target.getRadius()) {
-
-            // Check collision with stuck knives
+        // Only check collision when knife actually reaches the target
+        if (knifeBottom >= targetEdge && currentKnife.getY() <= target.getY() + target.getRadius() + 50) {
+            // Check collision with stuck knives ONLY when knife reaches target
             if (checkKnifeCollision()) {
                 currentState = GameState::GAME_OVER;
                 return;
             }
 
-            // Calculate angle and stick the knife
+            // Calculate angle and stick the knife AT THE EDGE
             float angle = atan2(currentKnife.getY() - target.getY(),
                 currentKnife.getX() - target.getX()) * 180.0f / M_PI;
             angle -= target.getRotation();
             if (angle < 0) angle += 360;
 
+            // Position knife at the edge of the target
             currentKnife.stick(target.getX(), target.getY(), target.getRotation());
-            target.addStuckKnife(angle, distToTarget);
+            target.addStuckKnife(angle, GameConstants::TARGET_RADIUS);
 
             // Add to stuck knives collection
             stuckKnives.push_back(currentKnife);
 
             // Reset for next throw
             currentKnife = Knife();
+            currentKnife.reset();
+            currentKnife.setActive(true);
+
             score += GameConstants::POINTS_PER_KNIFE;
             canThrow = true;
 
@@ -166,6 +173,11 @@ void Game::update(float deltaTime) {
 }
 
 bool Game::checkKnifeCollision() {
+    // Don't check collision if there are no stuck knives
+    if (stuckKnives.empty()) {
+        return false;
+    }
+
     float knifeAngle = atan2(currentKnife.getY() - target.getY(),
         currentKnife.getX() - target.getX()) * 180.0f / M_PI;
     knifeAngle -= target.getRotation();
@@ -198,6 +210,8 @@ void Game::updateStuckKnives() {
 }
 
 void Game::throwKnife() {
+    if (!canThrow || knivesLeft <= 0) return;  // Safety check
+
     currentKnife.setVelocityY(-GameConstants::KNIFE_SPEED);
     currentKnife.setActive(true);
     canThrow = false;
@@ -206,16 +220,18 @@ void Game::throwKnife() {
 
 void Game::initializeLevel() {
     target.reset(level);
-    currentKnife = Knife();
+    currentKnife = Knife(); // Reset knife to starting position
     stuckKnives.clear();  // Clear stuck knives for new level
     knivesLeft = GameConstants::KNIVES_PER_LEVEL;
     canThrow = true;
+
+    // FIXED: Ensure knife is properly positioned and visible
+    currentKnife.reset(); // Make sure knife is at starting position
+    currentKnife.setActive(true); // Make sure knife is active and visible
 }
 
 void Game::run() {
-    bool running = true;
-
-    while (running) {
+    while (true) {  // FIXED: Use infinite loop with proper exit handling
         handleEvents();
 
         Uint64 currentTime = SDL_GetTicksNS();

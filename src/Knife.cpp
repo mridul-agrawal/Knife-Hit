@@ -39,10 +39,16 @@ void Knife::stick(float targetX, float targetY, float targetRotation) {
     if (angle < 0) angle += 360;
 
     stuckAngle = angle;
-    distanceFromCenter = sqrt(pow(x - targetX, 2) + pow(y - targetY, 2));
+    // FIXED: Set distance to target radius so knife sticks at edge
+    distanceFromCenter = GameConstants::TARGET_RADIUS;
 
-    // Set initial rotation to point outward from center
-    rotation = angle + 90.0f;  // NEW: Knife points outward
+    // FIXED: Position knife exactly at the edge of target
+    float currentAngle = (stuckAngle + targetRotation) * M_PI / 180.0f;
+    x = targetX + distanceFromCenter * cos(currentAngle);
+    y = targetY + distanceFromCenter * sin(currentAngle);
+
+    // Keep knife upright (no rotation for visual consistency)
+    rotation = 0.0f;
 }
 
 // NEW: Update position of stuck knife as target rotates

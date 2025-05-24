@@ -20,7 +20,7 @@ namespace GameConstants {
     const float TARGET_RADIUS = 140.0f;  // Increased significantly
     const float TARGET_X = SCREEN_WIDTH / 2.0f;
     const float TARGET_Y = SCREEN_HEIGHT * 0.3f;  // 30% from top
-    const float TARGET_ROTATION_SPEED = 30.0f;
+    const float TARGET_ROTATION_SPEED = 90.0f;  // INCREASED: 3x faster (was 30.0f)
 
     // Knife properties
     const float KNIFE_WIDTH = 12.0f;   // Slightly wider
@@ -32,8 +32,8 @@ namespace GameConstants {
 
     // Level progression
     const int KNIVES_PER_LEVEL = 6;  // This was missing!
-    const float BASE_ROTATION_SPEED = 30.0f;
-    const float ROTATION_SPEED_INCREMENT = 15.0f;  // Speed increase per level
+    const float BASE_ROTATION_SPEED = 90.0f;  // INCREASED: 3x faster
+    const float ROTATION_SPEED_INCREMENT = 45.0f;  // INCREASED: 3x faster increment
     const int LEVEL_FOR_REVERSE_ROTATION = 3;  // Level when rotation can reverse
     const int MAX_PRE_STUCK_KNIVES = 4;  // Max pre-stuck knives in higher levels
     const int POINTS_PER_KNIFE = 10;
@@ -51,7 +51,7 @@ namespace GameConstants {
 
     // Collision detection - FIXED VALUES
     const float COLLISION_THRESHOLD = 30.0f;  // Increased for better collision detection
-    const float TARGET_HIT_DISTANCE = TARGET_RADIUS + 30.0f;  // When knife hits target
+    const float TARGET_HIT_DISTANCE = 10.0f;  // FIXED: Much smaller hit distance so knife hits edge
     const float KNIFE_TIP_OFFSET = 10.0f;
 
     // Colors namespace
