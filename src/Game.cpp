@@ -154,7 +154,7 @@ void Game::update(float deltaTime) {
         float knifeTop = currentKnife.getY() - GameConstants::KNIFE_IMAGE_TIP_OFFSET;
         float targetEdge = target.getY() + target.getRadius();
 
-        if (knifeTop >= targetEdge - GameConstants::TARGET_HIT_DISTANCE &&
+        if (knifeTop >= targetEdge - GameConstants::KNIFE_TARGET_HIT_THRESHOLD &&
             currentKnife.getY() <= target.getY() + target.getRadius() + 30) {
 
             // Check collision with stuck knives ONLY when knife reaches target
@@ -205,34 +205,64 @@ void Game::update(float deltaTime) {
     }
 }
 
+// REPLACE the entire checkKnifeCollision() method:
 bool Game::checkKnifeCollision() {
-    // Don't check collision if there are no stuck knives
     if (stuckKnives.empty()) {
         return false;
     }
 
-    float knifeAngle = atan2(currentKnife.getY() - target.getY(),
-        currentKnife.getX() - target.getX()) * 180.0f / M_PI;
-    knifeAngle -= target.getRotation();
-    if (knifeAngle < 0) knifeAngle += 360;
+    // Get incoming knife position when it hits target edge
+    float incomingX = currentKnife.getX();
+    float incomingY = currentKnife.getY();
+    float targetX = target.getX();
+    float targetY = target.getY();
 
-    // Check against all stuck knives
+    // Calculate where the incoming knife's handle will be when stuck
+    float incomingAngle = atan2(incomingY - targetY, incomingX - targetX);
+    float handleDistance = GameConstants::TARGET_RADIUS + GameConstants::KNIFE_IMAGE_HANDLE_OFFSET;
+    float predictedHandleX = targetX + handleDistance * cos(incomingAngle);
+    float predictedHandleY = targetY + handleDistance * sin(incomingAngle);
+
+    // Check collision with each stuck knife
     for (const auto& stuckKnife : stuckKnives) {
-        float stuckAngle = stuckKnife.getStuckAngle();
+        // Get the stuck knife's current handle position
+        float stuckHandleX = stuckKnife.getHandleX();
+        float stuckHandleY = stuckKnife.getHandleY();
 
-        // Calculate minimum angle difference (considering circular nature)
-        float angleDiff = std::abs(knifeAngle - stuckAngle);
-        if (angleDiff > 180) {
-            angleDiff = 360 - angleDiff;
+        // Calculate physical distance between handles
+        float handleDx = predictedHandleX - stuckHandleX;
+        float handleDy = predictedHandleY - stuckHandleY;
+        float handleDistance = sqrt(handleDx * handleDx + handleDy * handleDy);
+
+        // Check handle collision (most visible to player)
+        if (handleDistance < GameConstants::SPATIAL_COLLISION_THRESHOLD) {
+            std::cout << "HANDLE COLLISION! Distance: " << handleDistance
+                << "px (threshold: " << GameConstants::SPATIAL_COLLISION_THRESHOLD << "px)" << std::endl;
+            return true;
         }
 
-        // Check if knives are too close
-        if (angleDiff <= GameConstants::COLLISION_THRESHOLD) {
-            return true;  // Collision detected
+        // Also check blade collision for very close cases
+        float stuckBladeX = stuckKnife.getBladeX();
+        float stuckBladeY = stuckKnife.getBladeY();
+
+        // Predict incoming blade position
+        float bladeDistance = GameConstants::TARGET_RADIUS - GameConstants::KNIFE_IMAGE_TIP_OFFSET;
+        float predictedBladeX = targetX + bladeDistance * cos(incomingAngle);
+        float predictedBladeY = targetY + bladeDistance * sin(incomingAngle);
+
+        float bladeDx = predictedBladeX - stuckBladeX;
+        float bladeDy = predictedBladeY - stuckBladeY;
+        float bladeCollisionDistance = sqrt(bladeDx * bladeDx + bladeDy * bladeDy);
+
+        // Blade collision threshold (smaller since blades are thinner)
+        if (bladeCollisionDistance < GameConstants::BLADE_WIDTH + 2.0f) {
+            std::cout << "BLADE COLLISION! Distance: " << bladeCollisionDistance
+                << "px (threshold: " << GameConstants::BLADE_WIDTH + 2.0f << "px)" << std::endl;
+            return true;
         }
     }
 
-    return false;  // No collision
+    return false;
 }
 
 void Game::updateStuckKnives() {
@@ -304,34 +334,4 @@ void Game::run() {
         // Small delay to prevent excessive CPU usage
         SDL_Delay(16);  // ~60 FPS
     }
-}
-
-// Add this new method:
-void Renderer::renderCollisionPause(const Target& target, const std::vector<Knife>& knives,
-    const Knife& currentKnife, int level, int score, int knivesLeft) {
-    clear();
-    renderBackground();
-
-    // Render stuck knives (behind target)
-    renderKnives(knives);
-
-    // Render target
-    renderTarget(target);
-
-    // Render HUD
-    renderHUD(level, score);
-    renderKnifeIndicators(knivesLeft);
-
-    // Add visual feedback for collision
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 100);  // Red overlay
-    SDL_RenderFillRect(renderer, nullptr);
-
-    // Show collision message
-    SDL_Color collisionColor = { 255, 255, 255, 255 };
-    renderText("KNIFE COLLISION!", GameConstants::SCREEN_WIDTH / 2,
-        GameConstants::SCREEN_HEIGHT - 150,
-        collisionColor, true, FontManager::TITLE_FONT);
-
-    present();
 }

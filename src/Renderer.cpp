@@ -510,3 +510,35 @@ void Renderer::renderGame(const Target& target, const std::vector<Knife>& knives
     renderKnifeIndicators(knivesLeft);
     present();
 }
+
+void Renderer::renderCollisionPause(const Target& target, const std::vector<Knife>& knives,
+    const Knife& currentKnife, int level, int score, int knivesLeft) {
+    clear();
+    renderBackground();
+
+    // Render stuck knives (behind target)
+    renderKnives(knives);
+
+    // Render target
+    renderTarget(target);
+
+    // Render HUD
+    renderHUD(level, score);
+    renderKnifeIndicators(knivesLeft);
+
+    // Add visual feedback for collision
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 100);  // Red overlay
+    SDL_RenderFillRect(renderer, nullptr);
+
+    // Show collision message
+    SDL_Color collisionColor = { 255, 255, 255, 255 };
+    renderText("KNIFE", GameConstants::SCREEN_WIDTH / 2,
+        GameConstants::SCREEN_HEIGHT - 180,
+        collisionColor, true, FontManager::TITLE_FONT);
+    renderText("COLLISION!", GameConstants::SCREEN_WIDTH / 2,
+        GameConstants::SCREEN_HEIGHT - 130,
+        collisionColor, true, FontManager::TITLE_FONT);
+
+    present();
+}

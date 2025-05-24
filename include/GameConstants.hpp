@@ -54,9 +54,13 @@ namespace GameConstants {
     const float KNIFE_IMAGE_HANDLE_OFFSET = 25.0f; // Less handle showing
 
     // Collision detection - TUNED FOR IMAGE TARGET
-    const float COLLISION_THRESHOLD = 25.0f;  // Reduced for sprite precision
-    const float TARGET_HIT_DISTANCE = 5.0f;   // Much smaller for pixel-perfect edge detection
-    const float KNIFE_TIP_OFFSET = 5.0f;      // Reduced for sprite tip detection
+    const float KNIFE_HANDLE_WIDTH = 10.0f;       // Measure your sprite's handle width
+    const float KNIFE_HANDLE_LENGTH = 30.0f;      // Measure your sprite's handle length  
+    const float HANDLE_COLLISION_BUFFER = 2.0f;   // Reduce for tighter collision
+    const float BLADE_WIDTH = 5.0f;               // Measure your sprite's blade width
+    const float KNIFE_TARGET_HIT_THRESHOLD = 5.0f;  // Distance for knife to register hit on target
+    const float MIN_HANDLE_SEPARATION = KNIFE_HANDLE_WIDTH + HANDLE_COLLISION_BUFFER; // 11px minimum
+    const float SPATIAL_COLLISION_THRESHOLD = MIN_HANDLE_SEPARATION; // Use handle separation
 
     // Target image specific constants
     const float TARGET_IMAGE_SCALE = 1.0f;    // Scale factor if image needs resizing
