@@ -115,6 +115,7 @@ void Game::handleInput() {
     case GameState::LEVEL_COMPLETE:
         level++;
         score += GameConstants::LEVEL_COMPLETE_BONUS;  // Bonus points
+        stuckKnives.clear();  // FIXED: Clear stuck knives before initializing new level
         initializeLevel();
         currentState = GameState::PLAYING;
         break;
@@ -256,9 +257,7 @@ void Game::run() {
 
         case GameState::LEVEL_COMPLETE:
             renderer->renderLevelComplete();
-            // Auto-advance after a short delay
-            SDL_Delay(1500);
-            handleInput();  // Simulate input to advance
+            // FIXED: Don't auto-advance, wait for user input only
             break;
         }
 

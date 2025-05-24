@@ -343,6 +343,15 @@ void Renderer::renderLevelComplete() {
         GameConstants::SCREEN_HEIGHT / 2 + 20,
         successColor, true, FontManager::TITLE_FONT);
 
+    // ADDED: Tap to continue instruction
+    float pulse = (sin(SDL_GetTicks() / 300.0f) + 1.0f) / 2.0f;
+    Uint8 alpha = static_cast<Uint8>(128 + 127 * pulse);
+    SDL_Color continueColor = { 255, 255, 255, alpha };
+
+    renderText("TAP TO CONTINUE", GameConstants::SCREEN_WIDTH / 2,
+        GameConstants::SCREEN_HEIGHT / 2 + 100,
+        continueColor, true, FontManager::UI_FONT);
+
     present();
 }
 
