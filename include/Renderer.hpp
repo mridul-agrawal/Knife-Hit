@@ -38,4 +38,9 @@ public:
 private:
     SDL_Window* window;
     SDL_Renderer* renderer;
+    SDL_Texture* backgroundTexture;  // NEW: Background texture
+
+    // NEW: Helper methods for background
+    bool loadBackgroundTexture();
+    void cleanupBackgroundTexture();
 };

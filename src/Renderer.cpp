@@ -4,9 +4,10 @@
 #include <cmath>
 #include <vector>
 
-Renderer::Renderer(SDL_Window* window) : window(window), renderer(nullptr) {}
+Renderer::Renderer(SDL_Window* window) : window(window), renderer(nullptr), backgroundTexture(nullptr) {}
 
 Renderer::~Renderer() {
+    cleanupBackgroundTexture();
     if (renderer) {
         SDL_DestroyRenderer(renderer);
     }
@@ -25,7 +26,39 @@ bool Renderer::initialize() {
         return false;
     }
 
+    // Load background texture
+    if (!loadBackgroundTexture()) {
+        std::cout << "Failed to load background texture!" << std::endl;
+        return false;
+    }
+
     return true;
+}
+
+bool Renderer::loadBackgroundTexture() {
+    // Load the background image
+    SDL_Surface* surface = SDL_LoadBMP("assets/images/background.bmp");
+    if (!surface) {
+        std::cout << "Failed to load background image: " << SDL_GetError() << std::endl;
+        return false;
+    }
+
+    backgroundTexture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_DestroySurface(surface);
+
+    if (!backgroundTexture) {
+        std::cout << "Failed to create background texture: " << SDL_GetError() << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+void Renderer::cleanupBackgroundTexture() {
+    if (backgroundTexture) {
+        SDL_DestroyTexture(backgroundTexture);
+        backgroundTexture = nullptr;
+    }
 }
 
 void Renderer::clear() {
@@ -38,16 +71,27 @@ void Renderer::present() {
 }
 
 void Renderer::renderBackground() {
-    // Create gradient background
-    for (int y = 0; y < GameConstants::SCREEN_HEIGHT; y++) {
-        float t = static_cast<float>(y) / GameConstants::SCREEN_HEIGHT;
+    if (backgroundTexture) {
+        // Scale and render the background image to fit the screen
+        SDL_FRect destRect = {
+            0, 0,
+            static_cast<float>(GameConstants::SCREEN_WIDTH),
+            static_cast<float>(GameConstants::SCREEN_HEIGHT)
+        };
+        SDL_RenderTexture(renderer, backgroundTexture, nullptr, &destRect);
+    }
+    else {
+        // Fallback to gradient background if image fails to load
+        for (int y = 0; y < GameConstants::SCREEN_HEIGHT; y++) {
+            float t = static_cast<float>(y) / GameConstants::SCREEN_HEIGHT;
 
-        Uint8 r = static_cast<Uint8>(GameConstants::Colors::BACKGROUND_TOP.r * (1 - t) + GameConstants::Colors::BACKGROUND_BOTTOM.r * t);
-        Uint8 g = static_cast<Uint8>(GameConstants::Colors::BACKGROUND_TOP.g * (1 - t) + GameConstants::Colors::BACKGROUND_BOTTOM.g * t);
-        Uint8 b = static_cast<Uint8>(GameConstants::Colors::BACKGROUND_TOP.b * (1 - t) + GameConstants::Colors::BACKGROUND_BOTTOM.b * t);
+            Uint8 r = static_cast<Uint8>(GameConstants::Colors::BACKGROUND_TOP.r * (1 - t) + GameConstants::Colors::BACKGROUND_BOTTOM.r * t);
+            Uint8 g = static_cast<Uint8>(GameConstants::Colors::BACKGROUND_TOP.g * (1 - t) + GameConstants::Colors::BACKGROUND_BOTTOM.g * t);
+            Uint8 b = static_cast<Uint8>(GameConstants::Colors::BACKGROUND_TOP.b * (1 - t) + GameConstants::Colors::BACKGROUND_BOTTOM.b * t);
 
-        SDL_SetRenderDrawColor(renderer, r, g, b, 255);
-        SDL_RenderLine(renderer, 0, y, GameConstants::SCREEN_WIDTH, y);
+            SDL_SetRenderDrawColor(renderer, r, g, b, 255);
+            SDL_RenderLine(renderer, 0, y, GameConstants::SCREEN_WIDTH, y);
+        }
     }
 }
 
