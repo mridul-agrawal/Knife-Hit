@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\FontManager.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\Knife.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -146,6 +147,7 @@
     <ClCompile Include="src\Target.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\FontManager.hpp" />
     <ClInclude Include="include\Game.hpp" />
     <ClInclude Include="include\GameConstants.hpp" />
     <ClInclude Include="include\Knife.hpp" />

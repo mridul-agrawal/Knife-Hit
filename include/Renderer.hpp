@@ -3,9 +3,10 @@
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
 #include <string>
-#include "Knife.hpp"
-#include "Target.hpp"
+#include <vector>
 #include "GameConstants.hpp"
+#include "Target.hpp"
+#include "Knife.hpp"
 
 class Renderer {
 public:
@@ -13,26 +14,27 @@ public:
     ~Renderer();
 
     bool initialize();
-    void cleanup();
+    void clear();
+    void present();
 
+    // Rendering methods
+    void renderBackground();
+    void renderTarget(const Target& target);
+    void renderKnife(const Knife& knife);
+    void renderKnives(const std::vector<Knife>& knives);
+    void renderHUD(int level, int score);
     void renderMenu();
-    void renderGame(const Target& target, const Knife& currentKnife, int knivesLeft, int score, int level);
     void renderGameOver(int score);
-    void renderLevelComplete(int level, int score);
+    void renderLevelComplete();
+    void renderGame(const Target& target, const std::vector<Knife>& knives,
+        const Knife& currentKnife, int level, int score);
+
+    // Text rendering with font support
+    void renderText(const std::string& text, int x, int y,
+        const SDL_Color& color, bool centered = false,
+        const std::string& fontName = "ui");
 
 private:
-    void drawKnife(float x, float y, float angle = 0, float scale = 1.0f);
-    void drawTarget(const Target& target);
-    void setColor(const GameConstants::Colors::Color& color);
-    void drawGradientBackground();
-
-    void drawTTFText(const std::string& text, int x, int y, TTF_Font* font, const GameConstants::Colors::Color& color = GameConstants::Colors::WHITE);
-    void drawTTFTextCentered(const std::string& text, int centerX, int y, TTF_Font* font, const GameConstants::Colors::Color& color = GameConstants::Colors::WHITE);
-
     SDL_Window* window;
     SDL_Renderer* renderer;
-
-    TTF_Font* titleFont;   // For big text like "KNIFE HIT"
-    TTF_Font* uiFont;      // For UI text like "STAGE:", "SCORE:"
-    TTF_Font* numberFont;  // For numbers
 };

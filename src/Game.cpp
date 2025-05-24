@@ -2,6 +2,7 @@
 #include "../include/GameConstants.hpp"
 #include <iostream>
 #include <cmath>
+#include <vector>
 
 Game::Game()
     : window(nullptr)
@@ -184,7 +185,9 @@ void Game::initializeLevel() {
 }
 
 void Game::run() {
-    while (currentState != GameState::GAME_OVER) {
+    bool running = true;
+
+    while (running) {
         handleEvents();
 
         Uint64 currentTime = SDL_GetTicksNS();
@@ -199,16 +202,21 @@ void Game::run() {
             break;
 
         case GameState::PLAYING:
-            renderer->renderGame(target, currentKnife, knivesLeft, score, level);
-            break;
+        {
+            // Create empty vector for now - you'll need to implement knife storage
+            std::vector<Knife> emptyKnives;
+            renderer->renderGame(target, emptyKnives, currentKnife, level, score);
+        }
+        break;
 
         case GameState::GAME_OVER:
             renderer->renderGameOver(score);
+            running = false;  // Exit the game loop
             break;
 
         case GameState::LEVEL_COMPLETE:
-            renderer->renderLevelComplete(level, score);
+            renderer->renderLevelComplete();
             break;
         }
     }
-} 
+}

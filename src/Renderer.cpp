@@ -1,17 +1,15 @@
 #include "../include/Renderer.hpp"
+#include "../include/FontManager.hpp"
 #include <iostream>
 #include <cmath>
+#include <vector>
 
-Renderer::Renderer(SDL_Window* window)
-    : window(window)
-    , renderer(nullptr)
-    , titleFont(nullptr)
-    , uiFont(nullptr)
-    , numberFont(nullptr) {
-}
+Renderer::Renderer(SDL_Window* window) : window(window), renderer(nullptr) {}
 
 Renderer::~Renderer() {
-    cleanup();
+    if (renderer) {
+        SDL_DestroyRenderer(renderer);
+    }
 }
 
 bool Renderer::initialize() {
@@ -21,335 +19,300 @@ bool Renderer::initialize() {
         return false;
     }
 
-    // Enable blending for smooth graphics
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-
-    // Initialize TTF
-    if (!TTF_Init()) {
-        std::cout << "TTF_Init failed: " << SDL_GetError() << std::endl;
+    // Initialize font manager
+    if (!FontManager::getInstance().initialize()) {
+        std::cout << "Failed to initialize font manager!" << std::endl;
         return false;
-    }
-
-    // Load fonts with better sizes
-    titleFont = TTF_OpenFont("C:/Windows/Fonts/arial.ttf", 48);  // Bigger title
-    if (!titleFont) {
-        std::cout << "Warning: Could not load title font" << std::endl;
-    }
-
-    uiFont = TTF_OpenFont("C:/Windows/Fonts/arial.ttf", 24);  // Bigger UI
-    if (!uiFont) {
-        std::cout << "Warning: Could not load UI font" << std::endl;
-    }
-
-    numberFont = TTF_OpenFont("C:/Windows/Fonts/arial.ttf", 32);  // Bigger numbers
-    if (!numberFont) {
-        std::cout << "Warning: Could not load number font" << std::endl;
     }
 
     return true;
 }
 
-void Renderer::cleanup() {
-    if (titleFont) {
-        TTF_CloseFont(titleFont);
-        titleFont = nullptr;
-    }
-    if (uiFont) {
-        TTF_CloseFont(uiFont);
-        uiFont = nullptr;
-    }
-    if (numberFont) {
-        TTF_CloseFont(numberFont);
-        numberFont = nullptr;
-    }
-
-    TTF_Quit();
-
-    if (renderer) {
-        SDL_DestroyRenderer(renderer);
-        renderer = nullptr;
-    }
+void Renderer::clear() {
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
 }
 
-void Renderer::setColor(const GameConstants::Colors::Color& color) {
-    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+void Renderer::present() {
+    SDL_RenderPresent(renderer);
 }
 
-void Renderer::drawGradientBackground() {
-    // Draw gradient background like original game
+void Renderer::renderBackground() {
+    // Create gradient background
     for (int y = 0; y < GameConstants::SCREEN_HEIGHT; y++) {
-        float ratio = (float)y / GameConstants::SCREEN_HEIGHT;
+        float t = static_cast<float>(y) / GameConstants::SCREEN_HEIGHT;
 
-        // Interpolate between top and bottom colors
-        unsigned char r = GameConstants::Colors::BACKGROUND_TOP.r * (1 - ratio) +
-            GameConstants::Colors::BACKGROUND_DARK.r * ratio;
-        unsigned char g = GameConstants::Colors::BACKGROUND_TOP.g * (1 - ratio) +
-            GameConstants::Colors::BACKGROUND_DARK.g * ratio;
-        unsigned char b = GameConstants::Colors::BACKGROUND_TOP.b * (1 - ratio) +
-            GameConstants::Colors::BACKGROUND_DARK.b * ratio;
+        Uint8 r = static_cast<Uint8>(GameConstants::Colors::BACKGROUND_TOP.r * (1 - t) + GameConstants::Colors::BACKGROUND_BOTTOM.r * t);
+        Uint8 g = static_cast<Uint8>(GameConstants::Colors::BACKGROUND_TOP.g * (1 - t) + GameConstants::Colors::BACKGROUND_BOTTOM.g * t);
+        Uint8 b = static_cast<Uint8>(GameConstants::Colors::BACKGROUND_TOP.b * (1 - t) + GameConstants::Colors::BACKGROUND_BOTTOM.b * t);
 
         SDL_SetRenderDrawColor(renderer, r, g, b, 255);
         SDL_RenderLine(renderer, 0, y, GameConstants::SCREEN_WIDTH, y);
     }
 }
 
-void Renderer::drawKnife(float x, float y, float angle, float scale) {
-    float knifeWidth = GameConstants::KNIFE_WIDTH * scale;
-    float knifeLength = GameConstants::KNIFE_LENGTH * scale;
+void Renderer::renderTarget(const Target& target) {
+    float centerX = target.getX();
+    float centerY = target.getY();
+    float rotation = target.getRotation();
 
-    // Save render state
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    // Draw wooden circles
+    SDL_SetRenderDrawColor(renderer,
+        GameConstants::Colors::WOOD.r,
+        GameConstants::Colors::WOOD.g,
+        GameConstants::Colors::WOOD.b, 255);
 
-    // Draw knife handle (bottom part)
-    setColor(GameConstants::Colors::KNIFE_HANDLE);
-    SDL_FRect handleRect = {
-        x - knifeWidth / 2,
-        y - knifeLength * 0.35f,
-        knifeWidth,
-        knifeLength * 0.35f
-    };
-    SDL_RenderFillRect(renderer, &handleRect);
-
-    // Draw handle detail
-    setColor(GameConstants::Colors::WOOD_DARK);
-    SDL_FRect handleDetail = {
-        x - knifeWidth / 2 + 2,
-        y - knifeLength * 0.2f,
-        knifeWidth - 4,
-        2
-    };
-    SDL_RenderFillRect(renderer, &handleDetail);
-
-    // Draw knife blade
-    setColor(GameConstants::Colors::KNIFE_BLADE);
-    SDL_FRect bladeRect = {
-        x - knifeWidth / 2 + 1,
-        y - knifeLength,
-        knifeWidth - 2,
-        knifeLength * 0.65f
-    };
-    SDL_RenderFillRect(renderer, &bladeRect);
-
-    // Draw blade edge (darker line)
-    setColor(GameConstants::Colors::KNIFE_BLADE_EDGE);
-    SDL_RenderLine(renderer,
-        x - knifeWidth / 2 + 1, y - knifeLength,
-        x - knifeWidth / 2 + 1, y - knifeLength * 0.35f);
-    SDL_RenderLine(renderer,
-        x + knifeWidth / 2 - 1, y - knifeLength,
-        x + knifeWidth / 2 - 1, y - knifeLength * 0.35f);
-
-    // Draw knife tip (triangle)
-    SDL_FPoint tip[3] = {
-        {x - knifeWidth / 2 + 1, y - knifeLength},
-        {x + knifeWidth / 2 - 1, y - knifeLength},
-        {x, y - knifeLength - 8 * scale}
-    };
-
-    // Note: SDL3 doesn't have RenderFillTriangle, so we draw lines
-    setColor(GameConstants::Colors::KNIFE_BLADE);
-    for (int i = 0; i < 3; i++) {
-        SDL_RenderLine(renderer, tip[i].x, tip[i].y, tip[(i + 1) % 3].x, tip[(i + 1) % 3].y);
-    }
-}
-
-void Renderer::drawTarget(const Target& target) {
-    const float x = target.getX();
-    const float y = target.getY();
-    const float radius = target.getRadius();
-    const float rotation = target.getRotation();
-
-    // Draw wood texture circles (multiple layers for depth)
-    const int layers = 5;
-    for (int layer = layers; layer > 0; layer--) {
-        float layerRadius = radius * (0.9f + 0.1f * layer / layers);
-
-        // Alternate wood colors for rings
-        if (layer % 2 == 0) {
-            setColor(GameConstants::Colors::WOOD);
-        }
-        else {
-            setColor(GameConstants::Colors::WOOD_LIGHT);
-        }
-
-        // Draw filled circle
-        const int segments = 60;
-        for (int i = 0; i < segments; i++) {
-            float angle1 = (float)i / segments * 2 * M_PI;
-            float angle2 = (float)(i + 1) / segments * 2 * M_PI;
-
-            // Draw triangle from center to edge
-            SDL_FPoint triangle[3] = {
-                {x, y},
-                {x + cos(angle1) * layerRadius, y + sin(angle1) * layerRadius},
-                {x + cos(angle2) * layerRadius, y + sin(angle2) * layerRadius}
-            };
-
-            // Draw lines to form triangle
-            for (int j = 0; j < 3; j++) {
-                SDL_RenderLine(renderer,
-                    triangle[j].x, triangle[j].y,
-                    triangle[(j + 1) % 3].x, triangle[(j + 1) % 3].y);
+    // Draw filled circle
+    for (int w = 0; w < GameConstants::TARGET_RADIUS * 2; w++) {
+        for (int h = 0; h < GameConstants::TARGET_RADIUS * 2; h++) {
+            int dx = w - GameConstants::TARGET_RADIUS;
+            int dy = h - GameConstants::TARGET_RADIUS;
+            if ((dx * dx + dy * dy) <= (GameConstants::TARGET_RADIUS * GameConstants::TARGET_RADIUS)) {
+                SDL_RenderPoint(renderer, centerX + dx, centerY + dy);
             }
         }
     }
 
-    // Draw wood grain lines
-    setColor(GameConstants::Colors::WOOD_RING);
-    for (int i = 0; i < 8; i++) {
-        float angle = (rotation + i * 45) * M_PI / 180;
-        float startRadius = radius * 0.2f;
-        float endRadius = radius * 0.9f;
+    // Draw concentric circles
+    SDL_SetRenderDrawColor(renderer,
+        GameConstants::Colors::WOOD_DARK.r,
+        GameConstants::Colors::WOOD_DARK.g,
+        GameConstants::Colors::WOOD_DARK.b, 255);
 
-        SDL_RenderLine(renderer,
-            x + cos(angle) * startRadius,
-            y + sin(angle) * startRadius,
-            x + cos(angle) * endRadius,
-            y + sin(angle) * endRadius);
+    for (int radius = 20; radius < GameConstants::TARGET_RADIUS; radius += 20) {
+        for (int angle = 0; angle < 360; angle++) {
+            float radians = angle * M_PI / 180.0f;
+            int x = centerX + radius * cos(radians);
+            int y = centerY + radius * sin(radians);
+            SDL_RenderPoint(renderer, x, y);
+        }
     }
 
     // Draw center bullseye
-    setColor(GameConstants::Colors::RED);
-    const int centerSize = 8;
-    SDL_FRect center = { x - centerSize / 2, y - centerSize / 2, centerSize, centerSize };
-    SDL_RenderFillRect(renderer, &center);
+    SDL_SetRenderDrawColor(renderer,
+        GameConstants::Colors::RED.r,
+        GameConstants::Colors::RED.g,
+        GameConstants::Colors::RED.b, 255);
 
-    // Draw white dot in center
-    setColor(GameConstants::Colors::WHITE);
-    SDL_FRect centerDot = { x - 2, y - 2, 4, 4 };
-    SDL_RenderFillRect(renderer, &centerDot);
-
-    // Draw stuck knives
-    const auto& angles = target.getStuckKnifeAngles();
-    const auto& distances = target.getStuckKnifeDistances();
-    for (size_t i = 0; i < angles.size(); i++) {
-        float knifeAngle = angles[i] + rotation;
-        float knifeX = x + cos(knifeAngle * M_PI / 180) * distances[i];
-        float knifeY = y + sin(knifeAngle * M_PI / 180) * distances[i];
-        drawKnife(knifeX, knifeY, knifeAngle + 90);
+    for (int w = -8; w <= 8; w++) {
+        for (int h = -8; h <= 8; h++) {
+            if ((w * w + h * h) <= 64) {
+                SDL_RenderPoint(renderer, centerX + w, centerY + h);
+            }
+        }
     }
+}
+
+void Renderer::renderKnife(const Knife& knife) {
+    if (!knife.isKnifeActive()) return;
+
+    float x = knife.getX();
+    float y = knife.getY();
+
+    // Draw knife handle
+    SDL_SetRenderDrawColor(renderer, 139, 69, 19, 255);
+    SDL_FRect handleRect = {
+        x - GameConstants::KNIFE_WIDTH / 2,
+        y + GameConstants::KNIFE_LENGTH / 3,
+        static_cast<float>(GameConstants::KNIFE_WIDTH),
+        static_cast<float>(GameConstants::KNIFE_LENGTH / 3)
+    };
+    SDL_RenderFillRect(renderer, &handleRect);
+
+    // Draw knife blade
+    SDL_SetRenderDrawColor(renderer, 192, 192, 192, 255);
+    SDL_FRect bladeRect = {
+        x - GameConstants::KNIFE_WIDTH / 2,
+        y - GameConstants::KNIFE_LENGTH / 3,
+        static_cast<float>(GameConstants::KNIFE_WIDTH),
+        static_cast<float>(GameConstants::KNIFE_LENGTH * 2 / 3)
+    };
+    SDL_RenderFillRect(renderer, &bladeRect);
+}
+
+void Renderer::renderKnives(const std::vector<Knife>& knives) {
+    // This method is for rendering stuck knives and waiting knives
+    // Implementation depends on your knife storage logic
+    for (const auto& knife : knives) {
+        if (knife.isKnifeStuck()) {
+            renderKnife(knife);
+        }
+    }
+}
+
+void Renderer::renderText(const std::string& text, int x, int y,
+    const SDL_Color& color, bool centered, const std::string& fontName) {
+    TTF_Font* font = FontManager::getInstance().getFont(fontName);
+    if (!font) {
+        std::cerr << "Font not found: " << fontName << std::endl;
+        return;
+    }
+
+    // SDL3_ttf: Convert SDL_Color properly
+    SDL_Color sdlColor = { color.r, color.g, color.b, color.a };
+    SDL_Surface* surface = TTF_RenderText_Blended(font, text.c_str(), text.length(), sdlColor);
+    if (!surface) {
+        std::cerr << "Failed to create text surface" << std::endl;
+        return;
+    }
+
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+    if (!texture) {
+        std::cerr << "Failed to create text texture: " << SDL_GetError() << std::endl;
+        SDL_DestroySurface(surface);
+        return;
+    }
+
+    // Use surface dimensions before destroying it
+    SDL_FRect dstRect = {
+        static_cast<float>(x),
+        static_cast<float>(y),
+        static_cast<float>(surface->w),
+        static_cast<float>(surface->h)
+    };
+
+    if (centered) {
+        dstRect.x -= surface->w / 2.0f;
+        dstRect.y -= surface->h / 2.0f;
+    }
+
+    SDL_DestroySurface(surface);
+    SDL_RenderTexture(renderer, texture, nullptr, &dstRect);
+    SDL_DestroyTexture(texture);
 }
 
 void Renderer::renderMenu() {
-    // Draw gradient background
-    drawGradientBackground();
+    clear();
+    renderBackground();
 
-    int centerX = GameConstants::SCREEN_WIDTH / 2;
-    int centerY = GameConstants::SCREEN_HEIGHT / 2;
+    // Title with shadow effect
+    SDL_Color shadowColor = { 0, 0, 0, 128 };
+    SDL_Color titleColor = { 255, 255, 255, 255 };
 
-    // Draw title
-    drawTTFTextCentered("KNIFE", centerX, centerY - 250, titleFont, GameConstants::Colors::WHITE);
-    drawTTFTextCentered("HIT", centerX, centerY - 200, titleFont, GameConstants::Colors::YELLOW);
+    renderText("KNIFE", GameConstants::SCREEN_WIDTH / 2,
+        GameConstants::SCREEN_HEIGHT / 3 - 40 + 4,
+        shadowColor, true, FontManager::TITLE_FONT);
 
-    // Draw sample target
-    Target sampleTarget;
-    sampleTarget.setPosition(centerX, centerY - 50);
-    drawTarget(sampleTarget);
+    renderText("KNIFE", GameConstants::SCREEN_WIDTH / 2,
+        GameConstants::SCREEN_HEIGHT / 3 - 40,
+        titleColor, true, FontManager::TITLE_FONT);
 
-    // Draw "Tap to play" message
-    drawTTFTextCentered("TAP TO PLAY", centerX, centerY + 120, uiFont, GameConstants::Colors::WHITE);
+    renderText("HIT", GameConstants::SCREEN_WIDTH / 2,
+        GameConstants::SCREEN_HEIGHT / 3 + 40 + 4,
+        shadowColor, true, FontManager::TITLE_FONT);
 
-    // Draw sample knife at bottom
-    drawKnife(centerX, GameConstants::KNIFE_START_Y);
+    renderText("HIT", GameConstants::SCREEN_WIDTH / 2,
+        GameConstants::SCREEN_HEIGHT / 3 + 40,
+        titleColor, true, FontManager::TITLE_FONT);
 
-    SDL_RenderPresent(renderer);
+    // Pulsing effect for TAP TO PLAY
+    float pulse = (sin(SDL_GetTicks() / 300.0f) + 1.0f) / 2.0f;
+    Uint8 alpha = static_cast<Uint8>(128 + 127 * pulse);
+    SDL_Color tapColor = { 255, 255, 255, alpha };
+
+    renderText("TAP TO PLAY", GameConstants::SCREEN_WIDTH / 2,
+        GameConstants::SCREEN_HEIGHT * 2 / 3,
+        tapColor, true, FontManager::UI_FONT);
+
+    present();
 }
 
-void Renderer::renderGame(const Target& target, const Knife& currentKnife, int knivesLeft, int score, int level) {
-    // Draw gradient background
-    drawGradientBackground();
+void Renderer::renderHUD(int level, int score) {
+    // Stage indicator
+    std::string stageText = "STAGE " + std::to_string(level);
+    renderText(stageText, 80, 40,
+        { 255, 255, 255, 255 }, true, FontManager::UI_FONT);
 
-    // Draw target
-    drawTarget(target);
+    // Apple icon placeholder
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    SDL_FRect appleRect = {
+        static_cast<float>(GameConstants::SCREEN_WIDTH - 150),
+        static_cast<float>(25),
+        30, 30
+    };
+    SDL_RenderFillRect(renderer, &appleRect);
 
-    // Draw current knife
-    if (currentKnife.isKnifeActive()) {
-        drawKnife(currentKnife.getX(), currentKnife.getY());
-    }
-
-    // Draw score at top center
-    int centerX = GameConstants::SCREEN_WIDTH / 2;
-    drawTTFTextCentered(std::to_string(score), centerX, GameConstants::UI_TOP_MARGIN, numberFont, GameConstants::Colors::WHITE);
-
-    // Draw apple icon next to score (placeholder - just draw a circle)
-    setColor(GameConstants::Colors::RED);
-    SDL_FRect apple = { centerX + 40, GameConstants::UI_TOP_MARGIN + 10, 20, 20 };
-    SDL_RenderFillRect(renderer, &apple);
-
-    // Draw level indicator at top left
-    drawTTFText("STAGE " + std::to_string(level), GameConstants::UI_MARGIN, GameConstants::UI_TOP_MARGIN, uiFont, GameConstants::Colors::WHITE);
-
-    // Draw knife indicators at bottom
-    float indicatorStartX = centerX - (knivesLeft * GameConstants::KNIFE_INDICATOR_SPACING / 2);
-    for (int i = 0; i < knivesLeft; i++) {
-        float x = indicatorStartX + i * GameConstants::KNIFE_INDICATOR_SPACING;
-        drawKnife(x, GameConstants::KNIFE_INDICATOR_Y, 0, GameConstants::KNIFE_INDICATOR_SCALE);
-    }
-
-    SDL_RenderPresent(renderer);
+    // Score number
+    renderText(std::to_string(score),
+        GameConstants::SCREEN_WIDTH - 100, 40,
+        { 255, 255, 255, 255 }, true, FontManager::SCORE_FONT);
 }
 
 void Renderer::renderGameOver(int score) {
-    drawGradientBackground();
+    clear();
+    renderBackground();
 
-    int centerX = GameConstants::SCREEN_WIDTH / 2;
-    int centerY = GameConstants::SCREEN_HEIGHT / 2;
+    // Red tinted overlay
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 50);
+    SDL_RenderFillRect(renderer, nullptr);
 
-    drawTTFTextCentered("GAME OVER", centerX, centerY - 100, titleFont, GameConstants::Colors::RED);
-    drawTTFTextCentered("SCORE: " + std::to_string(score), centerX, centerY, uiFont, GameConstants::Colors::WHITE);
-    drawTTFTextCentered("TAP TO RESTART", centerX, centerY + 100, uiFont, GameConstants::Colors::WHITE);
+    SDL_Color shadowColor = { 0, 0, 0, 200 };
+    SDL_Color gameOverColor = { 255, 50, 50, 255 };
 
-    SDL_RenderPresent(renderer);
+    renderText("GAME OVER", GameConstants::SCREEN_WIDTH / 2,
+        GameConstants::SCREEN_HEIGHT / 2 - 50 + 4,
+        shadowColor, true, FontManager::TITLE_FONT);
+
+    renderText("GAME OVER", GameConstants::SCREEN_WIDTH / 2,
+        GameConstants::SCREEN_HEIGHT / 2 - 50,
+        gameOverColor, true, FontManager::TITLE_FONT);
+
+    std::string scoreText = "SCORE: " + std::to_string(score);
+    renderText(scoreText, GameConstants::SCREEN_WIDTH / 2,
+        GameConstants::SCREEN_HEIGHT / 2 + 20,
+        { 255, 255, 255, 255 }, true, FontManager::UI_FONT);
+
+    float pulse = (sin(SDL_GetTicks() / 300.0f) + 1.0f) / 2.0f;
+    Uint8 alpha = static_cast<Uint8>(128 + 127 * pulse);
+    SDL_Color restartColor = { 255, 255, 255, alpha };
+
+    renderText("TAP TO RESTART", GameConstants::SCREEN_WIDTH / 2,
+        GameConstants::SCREEN_HEIGHT / 2 + 80,
+        restartColor, true, FontManager::UI_FONT);
+
+    present();
 }
 
-void Renderer::renderLevelComplete(int level, int score) {
-    drawGradientBackground();
+void Renderer::renderLevelComplete() {
+    clear();
+    renderBackground();
 
-    int centerX = GameConstants::SCREEN_WIDTH / 2;
-    int centerY = GameConstants::SCREEN_HEIGHT / 2;
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(renderer, 76, 217, 100, 30);
+    SDL_RenderFillRect(renderer, nullptr);
 
-    drawTTFTextCentered("STAGE COMPLETE!", centerX, centerY - 100, titleFont, GameConstants::Colors::GREEN);
-    drawTTFTextCentered("STAGE " + std::to_string(level), centerX, centerY, uiFont, GameConstants::Colors::WHITE);
-    drawTTFTextCentered("SCORE: " + std::to_string(score), centerX, centerY + 40, uiFont, GameConstants::Colors::YELLOW);
-    drawTTFTextCentered("TAP TO CONTINUE", centerX, centerY + 120, uiFont, GameConstants::Colors::WHITE);
+    SDL_Color shadowColor = { 0, 0, 0, 200 };
+    SDL_Color successColor = { 76, 217, 100, 255 };
 
-    SDL_RenderPresent(renderer);
+    renderText("STAGE", GameConstants::SCREEN_WIDTH / 2,
+        GameConstants::SCREEN_HEIGHT / 2 - 50 + 4,
+        shadowColor, true, FontManager::TITLE_FONT);
+
+    renderText("STAGE", GameConstants::SCREEN_WIDTH / 2,
+        GameConstants::SCREEN_HEIGHT / 2 - 50,
+        successColor, true, FontManager::TITLE_FONT);
+
+    renderText("COMPLETE!", GameConstants::SCREEN_WIDTH / 2,
+        GameConstants::SCREEN_HEIGHT / 2 + 20 + 4,
+        shadowColor, true, FontManager::TITLE_FONT);
+
+    renderText("COMPLETE!", GameConstants::SCREEN_WIDTH / 2,
+        GameConstants::SCREEN_HEIGHT / 2 + 20,
+        successColor, true, FontManager::TITLE_FONT);
+
+    present();
 }
 
-void Renderer::drawTTFText(const std::string& text, int x, int y, TTF_Font* font, const GameConstants::Colors::Color& color) {
-    if (!font) return;
-
-    SDL_Color sdlColor = { color.r, color.g, color.b, color.a };
-    SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), 0, sdlColor);
-    if (!surface) return;
-
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-    SDL_DestroySurface(surface);
-    if (!texture) return;
-
-    float width, height;
-    SDL_GetTextureSize(texture, &width, &height);
-    SDL_FRect destRect = { (float)x, (float)y, width, height };
-
-    SDL_RenderTexture(renderer, texture, nullptr, &destRect);
-    SDL_DestroyTexture(texture);
-}
-
-void Renderer::drawTTFTextCentered(const std::string& text, int centerX, int y, TTF_Font* font, const GameConstants::Colors::Color& color) {
-    if (!font) return;
-
-    SDL_Color sdlColor = { color.r, color.g, color.b, color.a };
-    SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), 0, sdlColor);
-    if (!surface) return;
-
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-    SDL_DestroySurface(surface);
-    if (!texture) return;
-
-    float width, height;
-    SDL_GetTextureSize(texture, &width, &height);
-    SDL_FRect destRect = { (float)(centerX - width / 2), (float)y, width, height };
-
-    SDL_RenderTexture(renderer, texture, nullptr, &destRect);
-    SDL_DestroyTexture(texture);
+void Renderer::renderGame(const Target& target, const std::vector<Knife>& knives,
+    const Knife& currentKnife, int level, int score) {
+    clear();
+    renderBackground();
+    renderTarget(target);
+    renderKnives(knives);
+    if (currentKnife.isKnifeActive()) {
+        renderKnife(currentKnife);
+    }
+    renderHUD(level, score);
+    present();
 }
