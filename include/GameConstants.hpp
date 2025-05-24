@@ -50,8 +50,8 @@ namespace GameConstants {
     const float KNIFE_INDICATOR_SCALE = 0.7f;  // Slightly larger indicators
 
     // Add new knife image constants:
-    const float KNIFE_IMAGE_TIP_OFFSET = 8.0f;    // Distance from center to knife tip in sprite
-    const float KNIFE_IMAGE_HANDLE_OFFSET = 35.0f; // Distance from center to handle end
+    const float KNIFE_IMAGE_TIP_OFFSET = 15.0f;    // More penetration into target
+    const float KNIFE_IMAGE_HANDLE_OFFSET = 25.0f; // Less handle showing
 
     // Collision detection - TUNED FOR IMAGE TARGET
     const float COLLISION_THRESHOLD = 25.0f;  // Reduced for sprite precision

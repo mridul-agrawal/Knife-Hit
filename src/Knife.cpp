@@ -43,7 +43,7 @@ void Knife::stick(float targetX, float targetY, float targetRotation) {
 
     // Position knife exactly at the edge of target
     float currentAngle = (stuckAngle + targetRotation) * M_PI / 180.0f;
-    float adjustedDistance = distanceFromCenter + GameConstants::KNIFE_IMAGE_TIP_OFFSET;
+    float adjustedDistance = distanceFromCenter - GameConstants::KNIFE_IMAGE_TIP_OFFSET;
     x = targetX + adjustedDistance * cos(currentAngle);
     y = targetY + adjustedDistance * sin(currentAngle);
 
@@ -59,9 +59,10 @@ void Knife::updateStuckPosition(float targetX, float targetY, float targetRotati
     float currentAngle = (stuckAngle + targetRotation) * M_PI / 180.0f;
 
     // Update position based on distance and angle
-    x = targetX + distanceFromCenter * cos(currentAngle);
-    y = targetY + distanceFromCenter * sin(currentAngle);
+    float adjustedDistance = distanceFromCenter - GameConstants::KNIFE_IMAGE_TIP_OFFSET;
+    x = targetX + adjustedDistance * cos(currentAngle);
+    y = targetY + adjustedDistance * sin(currentAngle);
 
     // Update rotation to always point outward
-    rotation = stuckAngle + targetRotation + 90.0f;
+    rotation = stuckAngle + targetRotation - 90.0f;
 }

@@ -495,22 +495,18 @@ void Renderer::renderGame(const Target& target, const std::vector<Knife>& knives
     clear();
     renderBackground();
 
-    // Render target (rotating)
-    renderTarget(target);
-
-    // Render stuck knives (rotating with target)
+    // CHANGED: Render stuck knives FIRST (behind target)
     renderKnives(knives);
 
-    // Render current flying knife
+    // CHANGED: Render target AFTER knives (on top)
+    renderTarget(target);
+
+    // Render current flying knife (always on top)
     if (currentKnife.isKnifeActive() && !currentKnife.isKnifeStuck()) {
-        renderKnife(currentKnife, false);  // No rotation for flying knife
+        renderKnife(currentKnife, false);
     }
 
-    // Render HUD
     renderHUD(level, score);
-
-    // Render knife indicators (remaining knives)
     renderKnifeIndicators(knivesLeft);
-
     present();
 }
