@@ -16,8 +16,8 @@ namespace GameConstants {
     const int REFERENCE_WIDTH = 450;
     const int REFERENCE_HEIGHT = 800;
 
-    // Target properties - much larger and better positioned
-    const float TARGET_RADIUS = 140.0f;  // Increased significantly
+    // Target properties - adjusted for image-based target
+    const float TARGET_RADIUS = 140.0f;  // Keep same radius for collision detection
     const float TARGET_X = SCREEN_WIDTH / 2.0f;
     const float TARGET_Y = SCREEN_HEIGHT * 0.3f;  // 30% from top
     const float TARGET_ROTATION_SPEED = 90.0f;  // INCREASED: 3x faster (was 30.0f)
@@ -49,10 +49,18 @@ namespace GameConstants {
     const float KNIFE_INDICATOR_SPACING = 40.0f;  // More spacing between indicators
     const float KNIFE_INDICATOR_SCALE = 0.7f;  // Slightly larger indicators
 
-    // Collision detection - FIXED VALUES
-    const float COLLISION_THRESHOLD = 30.0f;  // Increased for better collision detection
-    const float TARGET_HIT_DISTANCE = 10.0f;  // FIXED: Much smaller hit distance so knife hits edge
-    const float KNIFE_TIP_OFFSET = 10.0f;
+    // Add new knife image constants:
+    const float KNIFE_IMAGE_TIP_OFFSET = 8.0f;    // Distance from center to knife tip in sprite
+    const float KNIFE_IMAGE_HANDLE_OFFSET = 35.0f; // Distance from center to handle end
+
+    // Collision detection - TUNED FOR IMAGE TARGET
+    const float COLLISION_THRESHOLD = 25.0f;  // Reduced for sprite precision
+    const float TARGET_HIT_DISTANCE = 5.0f;   // Much smaller for pixel-perfect edge detection
+    const float KNIFE_TIP_OFFSET = 5.0f;      // Reduced for sprite tip detection
+
+    // Target image specific constants
+    const float TARGET_IMAGE_SCALE = 1.0f;    // Scale factor if image needs resizing
+    const float TARGET_EDGE_TOLERANCE = 5.0f; // Extra tolerance for edge detection with image
 
     // Colors namespace
     namespace Colors {
@@ -75,7 +83,7 @@ namespace GameConstants {
         static const Color YELLOW(255, 204, 0);               // Gold/yellow
         static const Color ORANGE(255, 87, 51);               // Orange button
 
-        // Wood colors for target
+        // Wood colors for target (fallback)
         static const Color WOOD_LIGHT(218, 165, 105);         // Light wood
         static const Color WOOD(185, 135, 85);                // Main wood color
         static const Color WOOD_DARK(139, 90, 43);            // Dark wood

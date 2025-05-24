@@ -38,9 +38,15 @@ public:
 private:
     SDL_Window* window;
     SDL_Renderer* renderer;
-    SDL_Texture* backgroundTexture;  // NEW: Background texture
+    SDL_Texture* backgroundTexture;  // Background texture
+    SDL_Texture* targetTexture;      // NEW: Target texture
+    SDL_Texture* knifeTexture;      // NEW: Knife texture
 
-    // NEW: Helper methods for background
+    // Helper methods
     bool loadBackgroundTexture();
     void cleanupBackgroundTexture();
+    bool loadTargetTexture();        // NEW: Load target texture
+    void cleanupTargetTexture();     // NEW: Cleanup target texture
+    bool loadKnifeTexture();        // NEW: Load knife texture
+    void cleanupKnifeTexture();     // NEW: Cleanup knife texture
 };

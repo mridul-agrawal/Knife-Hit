@@ -43,8 +43,9 @@ void Knife::stick(float targetX, float targetY, float targetRotation) {
 
     // Position knife exactly at the edge of target
     float currentAngle = (stuckAngle + targetRotation) * M_PI / 180.0f;
-    x = targetX + distanceFromCenter * cos(currentAngle);
-    y = targetY + distanceFromCenter * sin(currentAngle);
+    float adjustedDistance = distanceFromCenter + GameConstants::KNIFE_IMAGE_TIP_OFFSET;
+    x = targetX + adjustedDistance * cos(currentAngle);
+    y = targetY + adjustedDistance * sin(currentAngle);
 
     // Keep visual appearance identical (no sprite rotation)
     rotation = 0.0f;

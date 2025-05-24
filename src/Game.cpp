@@ -135,10 +135,11 @@ void Game::update(float deltaTime) {
     if (currentKnife.isKnifeActive() && !currentKnife.isKnifeStuck()) {
         // FIXED: Check if knife tip reaches the edge of target
         float knifeBottom = currentKnife.getY() + GameConstants::KNIFE_LENGTH / 2;
+        float knifeTop = currentKnife.getY() - GameConstants::KNIFE_IMAGE_TIP_OFFSET;
         float targetEdge = target.getY() + target.getRadius();
 
-        // Only check collision when knife actually reaches the target
-        if (knifeBottom >= targetEdge && currentKnife.getY() <= target.getY() + target.getRadius() + 50) {
+        if (knifeTop >= targetEdge - GameConstants::TARGET_HIT_DISTANCE &&
+            currentKnife.getY() <= target.getY() + target.getRadius() + 30) {
             // Check collision with stuck knives ONLY when knife reaches target
             if (checkKnifeCollision()) {
                 currentState = GameState::GAME_OVER;

@@ -4,10 +4,13 @@
 #include <cmath>
 #include <vector>
 
-Renderer::Renderer(SDL_Window* window) : window(window), renderer(nullptr), backgroundTexture(nullptr) {}
+Renderer::Renderer(SDL_Window* window) : window(window), renderer(nullptr),
+backgroundTexture(nullptr), targetTexture(nullptr), knifeTexture(nullptr) {}
 
 Renderer::~Renderer() {
     cleanupBackgroundTexture();
+    cleanupTargetTexture();
+    cleanupKnifeTexture();  // NEW
     if (renderer) {
         SDL_DestroyRenderer(renderer);
     }
@@ -29,6 +32,18 @@ bool Renderer::initialize() {
     // Load background texture
     if (!loadBackgroundTexture()) {
         std::cout << "Failed to load background texture!" << std::endl;
+        return false;
+    }
+
+    // Load target texture
+    if (!loadTargetTexture()) {
+        std::cout << "Failed to load target texture!" << std::endl;
+        return false;
+    }
+
+    // Load knife texture
+    if (!loadKnifeTexture()) {
+        std::cout << "Failed to load knife texture!" << std::endl;
         return false;
     }
 
@@ -54,10 +69,61 @@ bool Renderer::loadBackgroundTexture() {
     return true;
 }
 
+bool Renderer::loadTargetTexture() {
+    // Load the target image
+    SDL_Surface* surface = SDL_LoadBMP("assets/images/target.bmp");
+    if (!surface) {
+        std::cout << "Failed to load target image: " << SDL_GetError() << std::endl;
+        return false;
+    }
+
+    targetTexture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_DestroySurface(surface);
+
+    if (!targetTexture) {
+        std::cout << "Failed to create target texture: " << SDL_GetError() << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+bool Renderer::loadKnifeTexture() {
+    SDL_Surface* surface = SDL_LoadBMP("assets/images/knife.bmp");
+    if (!surface) {
+        std::cout << "Failed to load knife image: " << SDL_GetError() << std::endl;
+        return false;
+    }
+
+    knifeTexture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_DestroySurface(surface);
+
+    if (!knifeTexture) {
+        std::cout << "Failed to create knife texture: " << SDL_GetError() << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+void Renderer::cleanupKnifeTexture() {
+    if (knifeTexture) {
+        SDL_DestroyTexture(knifeTexture);
+        knifeTexture = nullptr;
+    }
+}
+
 void Renderer::cleanupBackgroundTexture() {
     if (backgroundTexture) {
         SDL_DestroyTexture(backgroundTexture);
         backgroundTexture = nullptr;
+    }
+}
+
+void Renderer::cleanupTargetTexture() {
+    if (targetTexture) {
+        SDL_DestroyTexture(targetTexture);
+        targetTexture = nullptr;
     }
 }
 
@@ -99,48 +165,71 @@ void Renderer::renderTarget(const Target& target) {
     float centerX = target.getX();
     float centerY = target.getY();
     float rotation = target.getRotation();
+    float radius = target.getRadius();
 
-    // Draw wooden circles - improved rendering
-    SDL_SetRenderDrawColor(renderer,
-        GameConstants::Colors::WOOD.r,
-        GameConstants::Colors::WOOD.g,
-        GameConstants::Colors::WOOD.b, 255);
+    if (targetTexture) {
+        // Calculate the destination rectangle (centered on target position)
+        float diameter = radius * 2.0f;
+        SDL_FRect destRect = {
+            centerX - radius,  // Center the image on target position
+            centerY - radius,
+            diameter,
+            diameter
+        };
 
-    // Draw filled circle with better algorithm
-    int radius = static_cast<int>(GameConstants::TARGET_RADIUS);
-    for (int w = -radius; w <= radius; w++) {
-        for (int h = -radius; h <= radius; h++) {
-            if ((w * w + h * h) <= (radius * radius)) {
-                SDL_RenderPoint(renderer, centerX + w, centerY + h);
+        // Create rotation point (center of the target)
+        SDL_FPoint center = {
+            radius,  // Center point relative to destRect
+            radius
+        };
+
+        // Render the rotated target image
+        SDL_RenderTextureRotated(renderer, targetTexture, nullptr, &destRect,
+            rotation, &center, SDL_FLIP_NONE);
+    }
+    else {
+        // Fallback to original geometric rendering if texture fails to load
+        SDL_SetRenderDrawColor(renderer,
+            GameConstants::Colors::WOOD.r,
+            GameConstants::Colors::WOOD.g,
+            GameConstants::Colors::WOOD.b, 255);
+
+        // Draw filled circle with better algorithm
+        int radiusInt = static_cast<int>(radius);
+        for (int w = -radiusInt; w <= radiusInt; w++) {
+            for (int h = -radiusInt; h <= radiusInt; h++) {
+                if ((w * w + h * h) <= (radiusInt * radiusInt)) {
+                    SDL_RenderPoint(renderer, centerX + w, centerY + h);
+                }
             }
         }
-    }
 
-    // Draw concentric rings
-    SDL_SetRenderDrawColor(renderer,
-        GameConstants::Colors::WOOD_DARK.r,
-        GameConstants::Colors::WOOD_DARK.g,
-        GameConstants::Colors::WOOD_DARK.b, 255);
+        // Draw concentric rings
+        SDL_SetRenderDrawColor(renderer,
+            GameConstants::Colors::WOOD_DARK.r,
+            GameConstants::Colors::WOOD_DARK.g,
+            GameConstants::Colors::WOOD_DARK.b, 255);
 
-    for (int ring = 20; ring < radius; ring += 20) {
-        for (int angle = 0; angle < 360; angle += 2) {
-            float radians = angle * M_PI / 180.0f;
-            int x = centerX + ring * cos(radians);
-            int y = centerY + ring * sin(radians);
-            SDL_RenderPoint(renderer, x, y);
+        for (int ring = 20; ring < radiusInt; ring += 20) {
+            for (int angle = 0; angle < 360; angle += 2) {
+                float radians = angle * M_PI / 180.0f;
+                int x = centerX + ring * cos(radians);
+                int y = centerY + ring * sin(radians);
+                SDL_RenderPoint(renderer, x, y);
+            }
         }
-    }
 
-    // Draw center bullseye
-    SDL_SetRenderDrawColor(renderer,
-        GameConstants::Colors::RED.r,
-        GameConstants::Colors::RED.g,
-        GameConstants::Colors::RED.b, 255);
+        // Draw center bullseye
+        SDL_SetRenderDrawColor(renderer,
+            GameConstants::Colors::RED.r,
+            GameConstants::Colors::RED.g,
+            GameConstants::Colors::RED.b, 255);
 
-    for (int w = -10; w <= 10; w++) {
-        for (int h = -10; h <= 10; h++) {
-            if ((w * w + h * h) <= 100) {
-                SDL_RenderPoint(renderer, centerX + w, centerY + h);
+        for (int w = -10; w <= 10; w++) {
+            for (int h = -10; h <= 10; h++) {
+                if ((w * w + h * h) <= 100) {
+                    SDL_RenderPoint(renderer, centerX + w, centerY + h);
+                }
             }
         }
     }
@@ -152,88 +241,90 @@ void Renderer::renderKnife(const Knife& knife, bool useRotation) {
     float x = knife.getX();
     float y = knife.getY();
 
-    // FIXED: Render all knives the same way - simple upright knife
-    // Handle
-    SDL_SetRenderDrawColor(renderer, 139, 69, 19, 255);
-    SDL_FRect handleRect = {
-        x - GameConstants::KNIFE_WIDTH / 2,
-        y + GameConstants::KNIFE_LENGTH / 3,
-        static_cast<float>(GameConstants::KNIFE_WIDTH),
-        static_cast<float>(GameConstants::KNIFE_LENGTH / 3)
-    };
-    SDL_RenderFillRect(renderer, &handleRect);
+    if (knifeTexture) {
+        // Use knife image
+        SDL_FRect destRect = {
+            x - GameConstants::KNIFE_WIDTH / 2,
+            y - GameConstants::KNIFE_LENGTH / 2,
+            GameConstants::KNIFE_WIDTH,
+            GameConstants::KNIFE_LENGTH
+        };
 
-    // Blade
-    SDL_SetRenderDrawColor(renderer, 192, 192, 192, 255);
-    SDL_FRect bladeRect = {
-        x - GameConstants::KNIFE_WIDTH / 2,
-        y - GameConstants::KNIFE_LENGTH / 3,
-        static_cast<float>(GameConstants::KNIFE_WIDTH),
-        static_cast<float>(GameConstants::KNIFE_LENGTH * 2 / 3)
-    };
-    SDL_RenderFillRect(renderer, &bladeRect);
+        if (useRotation && knife.isKnifeStuck()) {
+            // Render rotated stuck knife
+            SDL_FPoint center = {
+                GameConstants::KNIFE_WIDTH / 2,
+                GameConstants::KNIFE_LENGTH / 2
+            };
+            SDL_RenderTextureRotated(renderer, knifeTexture, nullptr, &destRect,
+                knife.getRotation(), &center, SDL_FLIP_NONE);
+        }
+        else {
+            // Render normal upright knife
+            SDL_RenderTexture(renderer, knifeTexture, nullptr, &destRect);
+        }
+    }
+    else {
+        // Fallback to geometric rendering
+        SDL_SetRenderDrawColor(renderer, 139, 69, 19, 255);
+        SDL_FRect handleRect = {
+            x - GameConstants::KNIFE_WIDTH / 2,
+            y + GameConstants::KNIFE_LENGTH / 3,
+            static_cast<float>(GameConstants::KNIFE_WIDTH),
+            static_cast<float>(GameConstants::KNIFE_LENGTH / 3)
+        };
+        SDL_RenderFillRect(renderer, &handleRect);
+
+        SDL_SetRenderDrawColor(renderer, 192, 192, 192, 255);
+        SDL_FRect bladeRect = {
+            x - GameConstants::KNIFE_WIDTH / 2,
+            y - GameConstants::KNIFE_LENGTH / 3,
+            static_cast<float>(GameConstants::KNIFE_WIDTH),
+            static_cast<float>(GameConstants::KNIFE_LENGTH * 2 / 3)
+        };
+        SDL_RenderFillRect(renderer, &bladeRect);
+    }
 }
 
 void Renderer::renderKnives(const std::vector<Knife>& knives) {
-    // Render all stuck knives the same way as flying knives
     for (const auto& knife : knives) {
         if (knife.isKnifeStuck()) {
-            renderKnife(knife, false);  // FIXED: Don't use rotation, render normally
+            renderKnife(knife, true);  // CHANGED: Use rotation for stuck knives
         }
     }
 }
 
 void Renderer::renderKnifeIndicators(int knivesLeft) {
-    // Draw remaining knife indicators at the bottom left (rotated 45 degrees)
+    if (!knifeTexture) {
+        // Fallback to original geometric indicators
+        // ... keep existing geometric code ...
+        return;
+    }
+
+    // Use knife image for indicators
     float startX = 30.0f;
     float startY = GameConstants::KNIFE_INDICATOR_Y;
+    float scale = GameConstants::KNIFE_INDICATOR_SCALE;
 
     for (int i = 0; i < knivesLeft; i++) {
         float knifeX = startX;
         float knifeY = startY - (i * GameConstants::KNIFE_INDICATOR_SPACING);
 
-        // Draw small knife indicators rotated 45 degrees like original
-        float scale = GameConstants::KNIFE_INDICATOR_SCALE;
-        float width = GameConstants::KNIFE_WIDTH * scale;
-        float length = GameConstants::KNIFE_LENGTH * scale;
+        SDL_FRect destRect = {
+            knifeX - (GameConstants::KNIFE_WIDTH * scale) / 2,
+            knifeY - (GameConstants::KNIFE_LENGTH * scale) / 2,
+            GameConstants::KNIFE_WIDTH * scale,
+            GameConstants::KNIFE_LENGTH * scale
+        };
 
-        // 45 degree rotation
-        float angle = 45.0f * M_PI / 180.0f;
-        float cosA = cos(angle);
-        float sinA = sin(angle);
+        // Rotate 45 degrees for indicator style
+        SDL_FPoint center = {
+            (GameConstants::KNIFE_WIDTH * scale) / 2,
+            (GameConstants::KNIFE_LENGTH * scale) / 2
+        };
 
-        // Handle vertices (rotated)
-        float handleLen = length / 3;
-        float hx1 = (-width / 2) * cosA - (-handleLen / 2) * sinA;
-        float hy1 = (-width / 2) * sinA + (-handleLen / 2) * cosA;
-        float hx2 = (width / 2) * cosA - (-handleLen / 2) * sinA;
-        float hy2 = (width / 2) * sinA + (-handleLen / 2) * cosA;
-        float hx3 = (width / 2) * cosA - (handleLen / 2) * sinA;
-        float hy3 = (width / 2) * sinA + (handleLen / 2) * cosA;
-        float hx4 = (-width / 2) * cosA - (handleLen / 2) * sinA;
-        float hy4 = (-width / 2) * sinA + (handleLen / 2) * cosA;
-
-        // Draw handle
-        SDL_SetRenderDrawColor(renderer, 139, 69, 19, 255);
-        SDL_RenderLine(renderer, knifeX + hx1, knifeY + hy1, knifeX + hx2, knifeY + hy2);
-        SDL_RenderLine(renderer, knifeX + hx2, knifeY + hy2, knifeX + hx3, knifeY + hy3);
-        SDL_RenderLine(renderer, knifeX + hx3, knifeY + hy3, knifeX + hx4, knifeY + hy4);
-        SDL_RenderLine(renderer, knifeX + hx4, knifeY + hy4, knifeX + hx1, knifeY + hy1);
-
-        // Blade vertices (rotated)
-        float bladeLen = length * 2 / 3;
-        float bx1 = (-width / 4) * cosA - (handleLen / 2) * sinA;
-        float by1 = (-width / 4) * sinA + (handleLen / 2) * cosA;
-        float bx2 = (width / 4) * cosA - (handleLen / 2) * sinA;
-        float by2 = (width / 4) * sinA + (handleLen / 2) * cosA;
-        float bx3 = 0 * cosA - (handleLen / 2 + bladeLen) * sinA;
-        float by3 = 0 * sinA + (handleLen / 2 + bladeLen) * cosA;
-
-        // Draw blade
-        SDL_SetRenderDrawColor(renderer, 192, 192, 192, 255);
-        SDL_RenderLine(renderer, knifeX + bx1, knifeY + by1, knifeX + bx2, knifeY + by2);
-        SDL_RenderLine(renderer, knifeX + bx2, knifeY + by2, knifeX + bx3, knifeY + by3);
-        SDL_RenderLine(renderer, knifeX + bx3, knifeY + by3, knifeX + bx1, knifeY + by1);
+        SDL_RenderTextureRotated(renderer, knifeTexture, nullptr, &destRect,
+            45.0f, &center, SDL_FLIP_NONE);
     }
 }
 
