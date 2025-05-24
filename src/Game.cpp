@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
+#include "../include/FontManager.hpp"
 
 Game::Game()
     : window(nullptr)
@@ -13,7 +14,9 @@ Game::Game()
     , score(0)
     , canThrow(true)
     , lastTime(0)
-    , gameTime(0) {
+    , gameTime(0)
+    , collisionDetected(false)        // NEW
+    , collisionPauseTimer(0.0f) {     // NEW
 }
 
 Game::~Game() {
@@ -123,6 +126,19 @@ void Game::handleInput() {
 }
 
 void Game::update(float deltaTime) {
+
+    // Handle collision pause state
+    if (currentState == GameState::COLLISION_PAUSE) {
+        collisionPauseTimer -= deltaTime;
+        target.update(deltaTime);  // Keep target rotating during pause
+        updateStuckKnives();       // Keep knives rotating with target
+
+        if (collisionPauseTimer <= 0) {
+            currentState = GameState::GAME_OVER;
+        }
+        return;  // Don't process other game logic during pause
+    }
+
     if (currentState != GameState::PLAYING) return;
 
     gameTime += deltaTime;
@@ -140,9 +156,24 @@ void Game::update(float deltaTime) {
 
         if (knifeTop >= targetEdge - GameConstants::TARGET_HIT_DISTANCE &&
             currentKnife.getY() <= target.getY() + target.getRadius() + 30) {
+
             // Check collision with stuck knives ONLY when knife reaches target
             if (checkKnifeCollision()) {
-                currentState = GameState::GAME_OVER;
+                // Don't immediately go to game over - pause for visual feedback
+                collisionDetected = true;
+                collisionPauseTimer = COLLISION_PAUSE_DURATION;
+                currentState = GameState::COLLISION_PAUSE;
+
+                // Still stick the knife at collision point for visual feedback
+                float angle = atan2(currentKnife.getY() - target.getY(),
+                    currentKnife.getX() - target.getX()) * 180.0f / M_PI;
+                angle -= target.getRotation();
+                if (angle < 0) angle += 360;
+
+                currentKnife.stick(target.getX(), target.getY(), target.getRotation());
+                target.addStuckKnife(angle, GameConstants::TARGET_RADIUS);
+                stuckKnives.push_back(currentKnife);
+
                 return;
             }
 
@@ -227,6 +258,10 @@ void Game::initializeLevel() {
     knivesLeft = GameConstants::KNIVES_PER_LEVEL;
     canThrow = true;
 
+    // NEW: Reset collision state
+    collisionDetected = false;
+    collisionPauseTimer = 0.0f;
+
     // FIXED: Ensure knife is properly positioned and visible
     currentKnife.reset(); // Make sure knife is at starting position
     currentKnife.setActive(true); // Make sure knife is active and visible
@@ -252,6 +287,10 @@ void Game::run() {
             renderer->renderGame(target, stuckKnives, currentKnife, level, score, knivesLeft);
             break;
 
+        case GameState::COLLISION_PAUSE:  // NEW: Show collision state
+            renderer->renderCollisionPause(target, stuckKnives, currentKnife, level, score, knivesLeft);
+            break;
+
         case GameState::GAME_OVER:
             renderer->renderGameOver(score);
             break;  // Don't exit, wait for input
@@ -265,4 +304,34 @@ void Game::run() {
         // Small delay to prevent excessive CPU usage
         SDL_Delay(16);  // ~60 FPS
     }
+}
+
+// Add this new method:
+void Renderer::renderCollisionPause(const Target& target, const std::vector<Knife>& knives,
+    const Knife& currentKnife, int level, int score, int knivesLeft) {
+    clear();
+    renderBackground();
+
+    // Render stuck knives (behind target)
+    renderKnives(knives);
+
+    // Render target
+    renderTarget(target);
+
+    // Render HUD
+    renderHUD(level, score);
+    renderKnifeIndicators(knivesLeft);
+
+    // Add visual feedback for collision
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 100);  // Red overlay
+    SDL_RenderFillRect(renderer, nullptr);
+
+    // Show collision message
+    SDL_Color collisionColor = { 255, 255, 255, 255 };
+    renderText("KNIFE COLLISION!", GameConstants::SCREEN_WIDTH / 2,
+        GameConstants::SCREEN_HEIGHT - 150,
+        collisionColor, true, FontManager::TITLE_FONT);
+
+    present();
 }

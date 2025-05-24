@@ -34,6 +34,9 @@ public:
     void renderText(const std::string& text, int x, int y,
         const SDL_Color& color, bool centered = false,
         const std::string& fontName = "ui");
+    // Add new method declaration:
+    void renderCollisionPause(const Target& target, const std::vector<Knife>& knives,
+        const Knife& currentKnife, int level, int score, int knivesLeft);
 
 private:
     SDL_Window* window;

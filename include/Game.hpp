@@ -9,6 +9,7 @@
 enum class GameState {
     MENU,
     PLAYING,
+    COLLISION_PAUSE,
     GAME_OVER,
     LEVEL_COMPLETE
 };
@@ -43,6 +44,10 @@ private:
     int knivesLeft;
     int score;
     bool canThrow;
+
+    bool collisionDetected;
+    float collisionPauseTimer;
+    static constexpr float COLLISION_PAUSE_DURATION = 2.5f;
 
     Uint64 lastTime;
     float gameTime;
