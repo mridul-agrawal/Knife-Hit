@@ -45,12 +45,12 @@ namespace GameConstants {
     const int UI_TOP_MARGIN = 40;
 
     // Knife indicators positioning
-    const float KNIFE_INDICATOR_Y = SCREEN_HEIGHT - 100.0f;
-    const float KNIFE_INDICATOR_SPACING = 35.0f;
-    const float KNIFE_INDICATOR_SCALE = 0.6f;  // Smaller size for indicators
+    const float KNIFE_INDICATOR_Y = SCREEN_HEIGHT - 120.0f;  // Adjusted position
+    const float KNIFE_INDICATOR_SPACING = 40.0f;  // More spacing between indicators
+    const float KNIFE_INDICATOR_SCALE = 0.7f;  // Slightly larger indicators
 
-    // Collision detection
-    const float COLLISION_THRESHOLD = 25.0f;
+    // Collision detection - FIXED VALUES
+    const float COLLISION_THRESHOLD = 30.0f;  // Increased for better collision detection
     const float TARGET_HIT_DISTANCE = TARGET_RADIUS + 30.0f;  // When knife hits target
     const float KNIFE_TIP_OFFSET = 10.0f;
 

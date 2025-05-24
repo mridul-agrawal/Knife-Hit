@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL3/SDL.h>
+#include <vector>
 #include "Knife.hpp"
 #include "Target.hpp"
 #include "Renderer.hpp"
@@ -16,11 +17,11 @@ class Game {
 public:
     Game();
     ~Game();
-    
+
     bool initialize();
     void run();
     void cleanup();
-    
+
 private:
     void handleEvents();
     void update(float deltaTime);
@@ -28,19 +29,21 @@ private:
     void throwKnife();
     bool checkKnifeCollision();
     void initializeLevel();
-    
+    void updateStuckKnives();  // NEW: Update positions of stuck knives
+
     SDL_Window* window;
     Renderer* renderer;
     GameState currentState;
-    
+
     Target target;
     Knife currentKnife;
-    
+    std::vector<Knife> stuckKnives;  // NEW: Store stuck knives
+
     int level;
     int knivesLeft;
     int score;
     bool canThrow;
-    
+
     Uint64 lastTime;
     float gameTime;
-}; 
+};

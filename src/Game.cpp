@@ -101,14 +101,17 @@ void Game::handleInput() {
         break;
 
     case GameState::GAME_OVER:
+        // Reset game state
         level = 1;
         score = 0;
+        stuckKnives.clear();  // Clear stuck knives
         initializeLevel();
         currentState = GameState::MENU;
         break;
 
     case GameState::LEVEL_COMPLETE:
         level++;
+        score += GameConstants::LEVEL_COMPLETE_BONUS;  // Bonus points
         initializeLevel();
         currentState = GameState::PLAYING;
         break;
@@ -122,6 +125,9 @@ void Game::update(float deltaTime) {
     target.update(deltaTime);
     currentKnife.update(deltaTime);
 
+    // Update stuck knives positions as target rotates
+    updateStuckKnives();
+
     if (currentKnife.isKnifeActive() && !currentKnife.isKnifeStuck()) {
         float distToTarget = sqrt(pow(currentKnife.getX() - target.getX(), 2) +
             pow(currentKnife.getY() - target.getY(), 2));
@@ -129,11 +135,13 @@ void Game::update(float deltaTime) {
         if (distToTarget <= GameConstants::TARGET_HIT_DISTANCE &&
             currentKnife.getY() <= target.getY() + target.getRadius()) {
 
+            // Check collision with stuck knives
             if (checkKnifeCollision()) {
                 currentState = GameState::GAME_OVER;
                 return;
             }
 
+            // Calculate angle and stick the knife
             float angle = atan2(currentKnife.getY() - target.getY(),
                 currentKnife.getX() - target.getX()) * 180.0f / M_PI;
             angle -= target.getRotation();
@@ -142,6 +150,10 @@ void Game::update(float deltaTime) {
             currentKnife.stick(target.getX(), target.getY(), target.getRotation());
             target.addStuckKnife(angle, distToTarget);
 
+            // Add to stuck knives collection
+            stuckKnives.push_back(currentKnife);
+
+            // Reset for next throw
             currentKnife = Knife();
             score += GameConstants::POINTS_PER_KNIFE;
             canThrow = true;
@@ -159,15 +171,30 @@ bool Game::checkKnifeCollision() {
     knifeAngle -= target.getRotation();
     if (knifeAngle < 0) knifeAngle += 360;
 
-    const auto& stuckAngles = target.getStuckKnifeAngles();
-    for (float stuckAngle : stuckAngles) {
+    // Check against all stuck knives
+    for (const auto& stuckKnife : stuckKnives) {
+        float stuckAngle = stuckKnife.getStuckAngle();
+
+        // Calculate minimum angle difference (considering circular nature)
         float angleDiff = std::abs(knifeAngle - stuckAngle);
-        if (angleDiff <= GameConstants::COLLISION_THRESHOLD / 2 ||
-            angleDiff >= 360 - GameConstants::COLLISION_THRESHOLD / 2) {
-            return true;
+        if (angleDiff > 180) {
+            angleDiff = 360 - angleDiff;
+        }
+
+        // Check if knives are too close
+        if (angleDiff <= GameConstants::COLLISION_THRESHOLD) {
+            return true;  // Collision detected
         }
     }
-    return false;
+
+    return false;  // No collision
+}
+
+void Game::updateStuckKnives() {
+    // Update all stuck knives to rotate with the target
+    for (auto& knife : stuckKnives) {
+        knife.updateStuckPosition(target.getX(), target.getY(), target.getRotation());
+    }
 }
 
 void Game::throwKnife() {
@@ -180,6 +207,7 @@ void Game::throwKnife() {
 void Game::initializeLevel() {
     target.reset(level);
     currentKnife = Knife();
+    stuckKnives.clear();  // Clear stuck knives for new level
     knivesLeft = GameConstants::KNIVES_PER_LEVEL;
     canThrow = true;
 }
@@ -202,21 +230,23 @@ void Game::run() {
             break;
 
         case GameState::PLAYING:
-        {
-            // Create empty vector for now - you'll need to implement knife storage
-            std::vector<Knife> emptyKnives;
-            renderer->renderGame(target, emptyKnives, currentKnife, level, score);
-        }
-        break;
+            // Pass actual stuck knives instead of empty vector
+            renderer->renderGame(target, stuckKnives, currentKnife, level, score, knivesLeft);
+            break;
 
         case GameState::GAME_OVER:
             renderer->renderGameOver(score);
-            running = false;  // Exit the game loop
-            break;
+            break;  // Don't exit, wait for input
 
         case GameState::LEVEL_COMPLETE:
             renderer->renderLevelComplete();
+            // Auto-advance after a short delay
+            SDL_Delay(1500);
+            handleInput();  // Simulate input to advance
             break;
         }
+
+        // Small delay to prevent excessive CPU usage
+        SDL_Delay(16);  // ~60 FPS
     }
 }

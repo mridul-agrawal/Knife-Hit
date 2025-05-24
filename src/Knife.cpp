@@ -1,4 +1,5 @@
 #include "../include/Knife.hpp"
+#include <cmath>
 
 Knife::Knife()
     : x(GameConstants::TARGET_X)
@@ -7,7 +8,8 @@ Knife::Knife()
     , isStuck(false)
     , isActive(true)
     , stuckAngle(0)
-    , distanceFromCenter(0) {
+    , distanceFromCenter(0)
+    , rotation(0) {  // NEW: Initialize rotation
 }
 
 void Knife::update(float deltaTime) {
@@ -24,17 +26,36 @@ void Knife::reset() {
     isActive = true;
     stuckAngle = 0;
     distanceFromCenter = 0;
+    rotation = 0;  // NEW: Reset rotation
 }
 
 void Knife::stick(float targetX, float targetY, float targetRotation) {
     isStuck = true;
     velY = 0;
-    
+
     // Calculate angle relative to target center
     float angle = atan2(y - targetY, x - targetX) * 180.0f / M_PI;
     angle -= targetRotation; // Make relative to target rotation
     if (angle < 0) angle += 360;
-    
+
     stuckAngle = angle;
     distanceFromCenter = sqrt(pow(x - targetX, 2) + pow(y - targetY, 2));
-} 
+
+    // Set initial rotation to point outward from center
+    rotation = angle + 90.0f;  // NEW: Knife points outward
+}
+
+// NEW: Update position of stuck knife as target rotates
+void Knife::updateStuckPosition(float targetX, float targetY, float targetRotation) {
+    if (!isStuck) return;
+
+    // Calculate current angle based on target rotation
+    float currentAngle = (stuckAngle + targetRotation) * M_PI / 180.0f;
+
+    // Update position based on distance and angle
+    x = targetX + distanceFromCenter * cos(currentAngle);
+    y = targetY + distanceFromCenter * sin(currentAngle);
+
+    // Update rotation to always point outward
+    rotation = stuckAngle + targetRotation + 90.0f;
+}

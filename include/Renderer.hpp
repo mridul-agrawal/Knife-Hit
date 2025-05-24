@@ -20,14 +20,15 @@ public:
     // Rendering methods
     void renderBackground();
     void renderTarget(const Target& target);
-    void renderKnife(const Knife& knife);
+    void renderKnife(const Knife& knife, bool useRotation = false);  // UPDATED: Added rotation param
     void renderKnives(const std::vector<Knife>& knives);
     void renderHUD(int level, int score);
+    void renderKnifeIndicators(int knivesLeft);  // NEW: Show remaining knives
     void renderMenu();
     void renderGameOver(int score);
     void renderLevelComplete();
     void renderGame(const Target& target, const std::vector<Knife>& knives,
-        const Knife& currentKnife, int level, int score);
+        const Knife& currentKnife, int level, int score, int knivesLeft);  // UPDATED: Added knivesLeft
 
     // Text rendering with font support
     void renderText(const std::string& text, int x, int y,
