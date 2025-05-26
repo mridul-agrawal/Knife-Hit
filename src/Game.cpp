@@ -128,7 +128,7 @@ void Game::update(float deltaTime) {
     // Handle collision pause state
     if (currentState == GameState::COLLISION_PAUSE) {
         collisionPauseTimer -= deltaTime;
-        target.update(deltaTime);  // Keep target rotating during pause
+        // target.update(deltaTime);  // Keep target rotating during pause
         updateStuckKnives();       // Keep knives rotating with target
 
         /*if (collisionPauseTimer <= 0) {
@@ -140,7 +140,7 @@ void Game::update(float deltaTime) {
     if (currentState != GameState::PLAYING) return;
 
     gameTime += deltaTime;
-    target.update(deltaTime);
+    // target.update(deltaTime);
     currentKnife.update(deltaTime);
 
     // Update stuck knives positions as target rotates
