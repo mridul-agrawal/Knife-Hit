@@ -131,9 +131,9 @@ void Game::update(float deltaTime) {
         target.update(deltaTime);  // Keep target rotating during pause
         updateStuckKnives();       // Keep knives rotating with target
 
-        if (collisionPauseTimer <= 0) {
+        /*if (collisionPauseTimer <= 0) {
             currentState = GameState::GAME_OVER;
-        }
+        }*/
         return;  // Don't process other game logic during pause
     }
 
@@ -197,9 +197,9 @@ void Game::update(float deltaTime) {
             score += GameConstants::POINTS_PER_KNIFE;
             canThrow = true;
 
-            if (knivesLeft <= 0) {
+           /* if (knivesLeft <= 0) {
                 currentState = GameState::LEVEL_COMPLETE;
-            }
+            }*/
         }
     }
 }
@@ -288,7 +288,7 @@ void Game::throwKnife() {
     currentKnife.setVelocityY(-GameConstants::KNIFE_SPEED);
     currentKnife.setActive(true);
     canThrow = false;
-    knivesLeft--;
+    // knivesLeft--;
 }
 
 void Game::initializeLevel() {

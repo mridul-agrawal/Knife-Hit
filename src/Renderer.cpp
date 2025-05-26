@@ -519,8 +519,8 @@ void Renderer::renderGame(const Target& target, const std::vector<Knife>& knives
         renderKnife(currentKnife, false);
     }
 
-    renderHUD(level, score);
-    renderKnifeIndicators(knivesLeft);
+    // renderHUD(level, score);
+    // renderKnifeIndicators(knivesLeft);
     present();
 }
 
@@ -536,8 +536,8 @@ void Renderer::renderCollisionPause(const Target& target, const std::vector<Knif
     renderTarget(target);
 
     // Render HUD
-    renderHUD(level, score);
-    renderKnifeIndicators(knivesLeft);
+    // renderHUD(level, score);
+    // renderKnifeIndicators(knivesLeft);
 
     // Add visual feedback for collision
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
