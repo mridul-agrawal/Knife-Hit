@@ -422,9 +422,9 @@ void Renderer::renderHUD(int level, int score) {
         { 255, 255, 255, 255 }, true, FontManager::UI_FONT);
 
     // Score number (removed apple)
-    /*renderText(std::to_string(score),
+    renderText(std::to_string(score),
         GameConstants::SCREEN_WIDTH - 100, 40,
-        { 255, 255, 255, 255 }, true, FontManager::SCORE_FONT);*/
+        { 255, 255, 255, 255 }, true, FontManager::SCORE_FONT);
 }
 
 void Renderer::renderGameOver(int score) {
@@ -447,10 +447,10 @@ void Renderer::renderGameOver(int score) {
         GameConstants::SCREEN_HEIGHT / 2 - 100,
         gameOverColor, true, FontManager::TITLE_FONT);
 
-    /*std::string scoreText = "SCORE: " + std::to_string(score);
+    std::string scoreText = "SCORE: " + std::to_string(score);
     renderText(scoreText, GameConstants::SCREEN_WIDTH / 2,
         GameConstants::SCREEN_HEIGHT / 2 - 20,
-        { 255, 255, 255, 255 }, true, FontManager::UI_FONT);*/
+        { 255, 255, 255, 255 }, true, FontManager::UI_FONT);
 
     // Pulsing restart button
     float pulse = (sin(SDL_GetTicks() / 300.0f) + 1.0f) / 2.0f;
