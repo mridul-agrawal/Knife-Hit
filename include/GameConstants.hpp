@@ -32,7 +32,7 @@ namespace GameConstants {
 
     // Level progression
     const int KNIVES_PER_LEVEL = 6;  // This was missing!
-    const float BASE_ROTATION_SPEED = 90.0f;  // INCREASED: 3x faster
+    const float BASE_ROTATION_SPEED = 5.0f;  // INCREASED: 3x faster
     const float ROTATION_SPEED_INCREMENT = 45.0f;  // INCREASED: 3x faster increment
     const int LEVEL_FOR_REVERSE_ROTATION = 3;  // Level when rotation can reverse
     const int MAX_PRE_STUCK_KNIVES = 4;  // Max pre-stuck knives in higher levels
