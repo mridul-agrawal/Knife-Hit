@@ -1,5 +1,7 @@
 #pragma once
-
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#endif
 #include <SDL3/SDL.h>
 #include <vector>
 #include "Knife.hpp"
@@ -22,6 +24,7 @@ public:
     bool initialize();
     void run();
     void cleanup();
+    bool loop();
 
 private:
     void handleEvents();
@@ -44,6 +47,7 @@ private:
     int knivesLeft;
     int score;
     bool canThrow;
+    bool shouldExit;
 
     bool collisionDetected;
     float collisionPauseTimer;

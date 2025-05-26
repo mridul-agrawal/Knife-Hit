@@ -54,6 +54,11 @@ bool Renderer::loadBackgroundTexture() {
     // Load the background image
     SDL_Surface* surface = SDL_LoadBMP("assets/images/background.bmp");
     if (!surface) {
+        // Try alternative path for Emscripten
+        surface = SDL_LoadBMP("background.bmp");
+    }
+
+    if (!surface) {
         std::cout << "Failed to load background image: " << SDL_GetError() << std::endl;
         return false;
     }
@@ -73,6 +78,10 @@ bool Renderer::loadTargetTexture() {
     // Load the target image
     SDL_Surface* surface = SDL_LoadBMP("assets/images/target.bmp");
     if (!surface) {
+        surface = SDL_LoadBMP("target.bmp");
+    }
+
+    if (!surface) {
         std::cout << "Failed to load target image: " << SDL_GetError() << std::endl;
         return false;
     }
@@ -90,6 +99,10 @@ bool Renderer::loadTargetTexture() {
 
 bool Renderer::loadKnifeTexture() {
     SDL_Surface* surface = SDL_LoadBMP("assets/images/knife.bmp");
+    if (!surface) {
+        surface = SDL_LoadBMP("knife.bmp");
+    }
+
     if (!surface) {
         std::cout << "Failed to load knife image: " << SDL_GetError() << std::endl;
         return false;

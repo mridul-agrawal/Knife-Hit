@@ -15,8 +15,9 @@ Game::Game()
     , canThrow(true)
     , lastTime(0)
     , gameTime(0)
-    , collisionDetected(false)        // NEW
-    , collisionPauseTimer(0.0f) {     // NEW
+    , collisionDetected(false)
+    , collisionPauseTimer(0.0f) 
+    , shouldExit(false) {     // NEW
 }
 
 Game::~Game() {
@@ -69,15 +70,12 @@ void Game::handleEvents() {
     while (SDL_PollEvent(&e)) {
         switch (e.type) {
         case SDL_EVENT_QUIT:
-            // FIXED: Properly exit the game
-            cleanup();
-            exit(0);
+            shouldExit = true;
             break;
 
         case SDL_EVENT_KEY_DOWN:
             if (e.key.key == SDLK_ESCAPE) {
-                cleanup();
-                exit(0);
+                shouldExit = true;
             }
             break;
 
@@ -310,40 +308,52 @@ void Game::initializeLevel() {
 }
 
 void Game::run() {
-    while (true) {  // FIXED: Use infinite loop with proper exit handling
-        handleEvents();
-
-        Uint64 currentTime = SDL_GetTicksNS();
-        float deltaTime = (currentTime - lastTime) / 1e9f;
-        lastTime = currentTime;
-
-        update(deltaTime);
-
-        switch (currentState) {
-        case GameState::MENU:
-            renderer->renderMenu();
-            break;
-
-        case GameState::PLAYING:
-            // Pass actual stuck knives instead of empty vector
-            renderer->renderGame(target, stuckKnives, currentKnife, level, score, knivesLeft);
-            break;
-
-        case GameState::COLLISION_PAUSE:  // NEW: Show collision state
-            renderer->renderCollisionPause(target, stuckKnives, currentKnife, level, score, knivesLeft);
-            break;
-
-        case GameState::GAME_OVER:
-            renderer->renderGameOver(score);
-            break;  // Don't exit, wait for input
-
-        case GameState::LEVEL_COMPLETE:
-            renderer->renderLevelComplete();
-            // FIXED: Don't auto-advance, wait for user input only
-            break;
-        }
-
-        // Small delay to prevent excessive CPU usage
+#ifdef __EMSCRIPTEN__
+    // Emscripten will handle the main loop
+    return;
+#else
+    while (!shouldExit) {
+        if (!loop()) break;
         SDL_Delay(16);  // ~60 FPS
     }
+#endif
+}
+
+// NEW METHOD - Add this to Game.cpp
+bool Game::loop() {
+    handleEvents();
+
+    if (shouldExit) {
+        return false;
+    }
+
+    Uint64 currentTime = SDL_GetTicksNS();
+    float deltaTime = (currentTime - lastTime) / 1e9f;
+    lastTime = currentTime;
+
+    update(deltaTime);
+
+    switch (currentState) {
+    case GameState::MENU:
+        renderer->renderMenu();
+        break;
+
+    case GameState::PLAYING:
+        renderer->renderGame(target, stuckKnives, currentKnife, level, score, knivesLeft);
+        break;
+
+    case GameState::COLLISION_PAUSE:
+        renderer->renderCollisionPause(target, stuckKnives, currentKnife, level, score, knivesLeft);
+        break;
+
+    case GameState::GAME_OVER:
+        renderer->renderGameOver(score);
+        break;
+
+    case GameState::LEVEL_COMPLETE:
+        renderer->renderLevelComplete();
+        break;
+    }
+
+    return true;
 }

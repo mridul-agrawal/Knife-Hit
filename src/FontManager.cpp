@@ -7,21 +7,21 @@ bool FontManager::initialize() {
         return false;
     }
 
-    // Load all required fonts with appropriate sizes
-    // Title font - Bold and chunky for KNIFE HIT, GAME OVER, etc.
-    if (!loadFont(TITLE_FONT, "assets/fonts/Fredoka-Bold.ttf", 64)) {
+    // Try primary paths first, then fallback paths
+    if (!loadFont(TITLE_FONT, "assets/fonts/Fredoka-Bold.ttf", 64) &&
+        !loadFont(TITLE_FONT, "Fredoka-Bold.ttf", 64)) {
         std::cerr << "Failed to load title font!" << std::endl;
         return false;
     }
 
-    // UI font - Medium weight for TAP TO PLAY, STAGE X, etc.
-    if (!loadFont(UI_FONT, "assets/fonts/Rubik-Medium.ttf", 32)) {
+    if (!loadFont(UI_FONT, "assets/fonts/Rubik-Medium.ttf", 32) &&
+        !loadFont(UI_FONT, "Rubik-Medium.ttf", 32)) {
         std::cerr << "Failed to load UI font!" << std::endl;
         return false;
     }
 
-    // Score font - Bold for numbers
-    if (!loadFont(SCORE_FONT, "assets/fonts/Rubik-Bold.ttf", 40)) {
+    if (!loadFont(SCORE_FONT, "assets/fonts/Rubik-Bold.ttf", 40) &&
+        !loadFont(SCORE_FONT, "Rubik-Bold.ttf", 40)) {
         std::cerr << "Failed to load score font!" << std::endl;
         return false;
     }

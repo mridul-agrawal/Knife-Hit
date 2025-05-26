@@ -1,5 +1,7 @@
 #pragma once
-
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#endif
 #include <vector>
 #include "GameConstants.hpp"
 
