@@ -1,4 +1,4 @@
-#include "../include/Game.hpp"
+﻿#include "../include/Game.hpp"
 #include "../include/GameConstants.hpp"
 #include <iostream>
 #include <cmath>
@@ -149,6 +149,7 @@ void Game::update(float deltaTime) {
     updateStuckKnives();
 
     if (currentKnife.isKnifeActive() && !currentKnife.isKnifeStuck()) {
+        
         // FIXED: Check if knife tip reaches the edge of target
         float knifeBottom = currentKnife.getY() + GameConstants::KNIFE_LENGTH / 2;
         float knifeTop = currentKnife.getY() - GameConstants::KNIFE_IMAGE_TIP_OFFSET;
@@ -205,63 +206,74 @@ void Game::update(float deltaTime) {
     }
 }
 
-// REPLACE the entire checkKnifeCollision() method:
 bool Game::checkKnifeCollision() {
     if (stuckKnives.empty()) {
+        std::cout << "No stuck knives to check collision against" << std::endl;
         return false;
     }
 
-    // Get incoming knife position when it hits target edge
+    std::cout << "\n=== COLLISION CHECK START ===" << std::endl;
+    std::cout << "Number of stuck knives: " << stuckKnives.size() << std::endl;
+    std::cout << "Collision threshold: " << GameConstants::SPATIAL_COLLISION_THRESHOLD << "px" << std::endl;
+
+    // Get current knife position and target info
     float incomingX = currentKnife.getX();
     float incomingY = currentKnife.getY();
     float targetX = target.getX();
     float targetY = target.getY();
+    float targetRotation = target.getRotation();
 
-    // Calculate where the incoming knife's handle will be when stuck
-    float incomingAngle = atan2(incomingY - targetY, incomingX - targetX);
-    float handleDistance = GameConstants::TARGET_RADIUS + GameConstants::KNIFE_IMAGE_HANDLE_OFFSET;
-    float predictedHandleX = targetX + handleDistance * cos(incomingAngle);
-    float predictedHandleY = targetY + handleDistance * sin(incomingAngle);
+    std::cout << "Incoming knife pos: (" << incomingX << ", " << incomingY << ")" << std::endl;
+    std::cout << "Target pos: (" << targetX << ", " << targetY << "), rotation: " << targetRotation << "°" << std::endl;
 
-    // Check collision with each stuck knife
-    for (const auto& stuckKnife : stuckKnives) {
-        // Get the stuck knife's current handle position
-        float stuckHandleX = stuckKnife.getHandleX();
-        float stuckHandleY = stuckKnife.getHandleY();
+    // Calculate incoming knife's angle relative to target
+    float incomingAngle = atan2(incomingY - targetY, incomingX - targetX) * 180.0f / M_PI;
+    float originalAngle = incomingAngle;
 
-        // Calculate physical distance between handles
-        float handleDx = predictedHandleX - stuckHandleX;
-        float handleDy = predictedHandleY - stuckHandleY;
-        float handleDistance = sqrt(handleDx * handleDx + handleDy * handleDy);
+    // Normalize the angle relative to target's current rotation
+    incomingAngle -= targetRotation;
+    if (incomingAngle < 0) incomingAngle += 360;
+    if (incomingAngle >= 360) incomingAngle -= 360;
 
-        // Check handle collision (most visible to player)
-        if (handleDistance < GameConstants::SPATIAL_COLLISION_THRESHOLD) {
-            std::cout << "HANDLE COLLISION! Distance: " << handleDistance
-                << "px (threshold: " << GameConstants::SPATIAL_COLLISION_THRESHOLD << "px)" << std::endl;
-            return true;
+    std::cout << "Incoming knife angle: " << originalAngle << "° (absolute) -> " << incomingAngle << "° (relative)" << std::endl;
+
+    // Check against each stuck knife
+    for (size_t i = 0; i < stuckKnives.size(); i++) {
+        const auto& stuckKnife = stuckKnives[i];
+        float stuckAngle = stuckKnife.getStuckAngle();
+
+        std::cout << "\nChecking against stuck knife " << i << ":" << std::endl;
+        std::cout << "  Stuck angle: " << stuckAngle << "°" << std::endl;
+
+        // Calculate angular difference
+        float angleDiff = std::abs(incomingAngle - stuckAngle);
+        if (angleDiff > 180) {
+            angleDiff = 360 - angleDiff;
         }
 
-        // Also check blade collision for very close cases
-        float stuckBladeX = stuckKnife.getBladeX();
-        float stuckBladeY = stuckKnife.getBladeY();
+        std::cout << "  Angular difference: " << angleDiff << "°" << std::endl;
 
-        // Predict incoming blade position
-        float bladeDistance = GameConstants::TARGET_RADIUS - GameConstants::KNIFE_IMAGE_TIP_OFFSET;
-        float predictedBladeX = targetX + bladeDistance * cos(incomingAngle);
-        float predictedBladeY = targetY + bladeDistance * sin(incomingAngle);
+        // Convert angular difference to physical distance at handle position
+        float handleRadius = GameConstants::TARGET_RADIUS + GameConstants::KNIFE_IMAGE_HANDLE_OFFSET;
+        float physicalSeparation = (angleDiff * M_PI / 180.0f) * handleRadius;
 
-        float bladeDx = predictedBladeX - stuckBladeX;
-        float bladeDy = predictedBladeY - stuckBladeY;
-        float bladeCollisionDistance = sqrt(bladeDx * bladeDx + bladeDy * bladeDy);
+        std::cout << "  Handle radius: " << handleRadius << "px" << std::endl;
+        std::cout << "  Physical separation: " << physicalSeparation << "px" << std::endl;
+        std::cout << "  Collision threshold: " << GameConstants::SPATIAL_COLLISION_THRESHOLD << "px" << std::endl;
 
-        // Blade collision threshold (smaller since blades are thinner)
-        if (bladeCollisionDistance < GameConstants::BLADE_WIDTH + 2.0f) {
-            std::cout << "BLADE COLLISION! Distance: " << bladeCollisionDistance
-                << "px (threshold: " << GameConstants::BLADE_WIDTH + 2.0f << "px)" << std::endl;
+        // Check if handles would overlap/collide
+        if (physicalSeparation < GameConstants::SPATIAL_COLLISION_THRESHOLD) {
+            std::cout << "  🔴 COLLISION! " << physicalSeparation << " < " << GameConstants::SPATIAL_COLLISION_THRESHOLD << std::endl;
+            std::cout << "=== COLLISION CHECK END (COLLISION FOUND) ===" << std::endl;
             return true;
+        }
+        else {
+            std::cout << "  ✅ No collision with this knife" << std::endl;
         }
     }
 
+    std::cout << "✅ No collisions detected with any stuck knife" << std::endl;
+    std::cout << "=== COLLISION CHECK END (NO COLLISION) ===" << std::endl;
     return false;
 }
 
