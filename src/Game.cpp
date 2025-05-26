@@ -99,9 +99,9 @@ void Game::handleInput() {
         break;
 
     case GameState::PLAYING:
-        if (canThrow && knivesLeft > 0 && !currentKnife.isKnifeStuck()) {
+        /*if (canThrow && knivesLeft > 0 && !currentKnife.isKnifeStuck()) {
             throwKnife();
-        }
+        }*/
         break;
 
     case GameState::GAME_OVER:
