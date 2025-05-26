@@ -157,24 +157,24 @@ void Game::update(float deltaTime) {
             currentKnife.getY() <= target.getY() + target.getRadius() + 30) {
 
             // Check collision with stuck knives ONLY when knife reaches target
-            if (checkKnifeCollision()) {
-                // Don't immediately go to game over - pause for visual feedback
-                collisionDetected = true;
-                collisionPauseTimer = COLLISION_PAUSE_DURATION;
-                currentState = GameState::COLLISION_PAUSE;
+            //if (checkKnifeCollision()) {
+            //    // Don't immediately go to game over - pause for visual feedback
+            //    collisionDetected = true;
+            //    collisionPauseTimer = COLLISION_PAUSE_DURATION;
+            //    currentState = GameState::COLLISION_PAUSE;
 
-                // Still stick the knife at collision point for visual feedback
-                float angle = atan2(currentKnife.getY() - target.getY(),
-                    currentKnife.getX() - target.getX()) * 180.0f / M_PI;
-                angle -= target.getRotation();
-                if (angle < 0) angle += 360;
+            //    // Still stick the knife at collision point for visual feedback
+            //    float angle = atan2(currentKnife.getY() - target.getY(),
+            //        currentKnife.getX() - target.getX()) * 180.0f / M_PI;
+            //    angle -= target.getRotation();
+            //    if (angle < 0) angle += 360;
 
-                currentKnife.stick(target.getX(), target.getY(), target.getRotation());
-                target.addStuckKnife(angle, GameConstants::TARGET_RADIUS);
-                stuckKnives.push_back(currentKnife);
+            //    currentKnife.stick(target.getX(), target.getY(), target.getRotation());
+            //    target.addStuckKnife(angle, GameConstants::TARGET_RADIUS);
+            //    stuckKnives.push_back(currentKnife);
 
-                return;
-            }
+            //    return;
+            //}
 
             // Calculate angle and stick the knife AT THE EDGE
             float angle = atan2(currentKnife.getY() - target.getY(),
