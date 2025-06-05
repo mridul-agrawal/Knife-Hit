@@ -4,6 +4,7 @@
 #include <cmath>
 #include <vector>
 #include "../include/FontManager.hpp"
+#include <SDL3/SDL_render.h>
 
 Game::Game()
     : window(nullptr)
@@ -40,13 +41,17 @@ bool Game::initialize() {
         return false;
     }
 
-    // Set window to centered position
     SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-
+    
     renderer = new Renderer(window);
     if (!renderer->initialize()) {
         return false;
     }
+
+    SDL_SetRenderLogicalPresentation(renderer->getSDLRenderer(),
+        GameConstants::SCREEN_WIDTH,
+        GameConstants::SCREEN_HEIGHT,
+        SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
     lastTime = SDL_GetTicksNS();
     initializeLevel();

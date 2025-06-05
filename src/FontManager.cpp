@@ -8,19 +8,19 @@ bool FontManager::initialize() {
     }
 
     // Try primary paths first, then fallback paths
-    if (!loadFont(TITLE_FONT, "assets/fonts/Fredoka-Bold.ttf", 64) &&
+    if (!loadFont(TITLE_FONT, "/assets/fonts/Fredoka-Bold.ttf", 64) &&
         !loadFont(TITLE_FONT, "Fredoka-Bold.ttf", 64)) {
         std::cerr << "Failed to load title font!" << std::endl;
         return false;
     }
 
-    if (!loadFont(UI_FONT, "assets/fonts/Rubik-Medium.ttf", 32) &&
+    if (!loadFont(UI_FONT, "/assets/fonts/Rubik-Medium.ttf", 32) &&
         !loadFont(UI_FONT, "Rubik-Medium.ttf", 32)) {
         std::cerr << "Failed to load UI font!" << std::endl;
         return false;
     }
 
-    if (!loadFont(SCORE_FONT, "assets/fonts/Rubik-Bold.ttf", 40) &&
+    if (!loadFont(SCORE_FONT, "/assets/fonts/Rubik-Bold.ttf", 40) &&
         !loadFont(SCORE_FONT, "Rubik-Bold.ttf", 40)) {
         std::cerr << "Failed to load score font!" << std::endl;
         return false;

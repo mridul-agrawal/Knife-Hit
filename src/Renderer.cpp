@@ -52,7 +52,7 @@ bool Renderer::initialize() {
 
 bool Renderer::loadBackgroundTexture() {
     // Load the background image
-    SDL_Surface* surface = SDL_LoadBMP("assets/images/background.bmp");
+    SDL_Surface* surface = SDL_LoadBMP("/assets/images/background.bmp");
     if (!surface) {
         // Try alternative path for Emscripten
         surface = SDL_LoadBMP("background.bmp");
@@ -76,7 +76,7 @@ bool Renderer::loadBackgroundTexture() {
 
 bool Renderer::loadTargetTexture() {
     // Load the target image
-    SDL_Surface* surface = SDL_LoadBMP("assets/images/target.bmp");
+    SDL_Surface* surface = SDL_LoadBMP("/assets/images/target.bmp");
     if (!surface) {
         surface = SDL_LoadBMP("target.bmp");
     }
@@ -98,7 +98,7 @@ bool Renderer::loadTargetTexture() {
 }
 
 bool Renderer::loadKnifeTexture() {
-    SDL_Surface* surface = SDL_LoadBMP("assets/images/knife.bmp");
+    SDL_Surface* surface = SDL_LoadBMP("/assets/images/knife.bmp");
     if (!surface) {
         surface = SDL_LoadBMP("knife.bmp");
     }
@@ -554,4 +554,8 @@ void Renderer::renderCollisionPause(const Target& target, const std::vector<Knif
         collisionColor, true, FontManager::TITLE_FONT);
 
     present();
+}
+
+SDL_Renderer* Renderer::getSDLRenderer() const {
+    return renderer;
 }

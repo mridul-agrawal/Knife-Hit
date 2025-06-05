@@ -8,13 +8,13 @@
 
 namespace GameConstants {
     // Screen dimensions - more reasonable size for desktop
-    const int SCREEN_WIDTH = 450;   // Reduced from 720
-    const int SCREEN_HEIGHT = 800;  // Reduced from 1280
+    const int SCREEN_WIDTH = 300;   // Reduced from 720
+    const int SCREEN_HEIGHT = 500;  // Reduced from 1280
 
     // Reference dimensions for scaling
     const float ASPECT_RATIO = 9.0f / 16.0f;
-    const int REFERENCE_WIDTH = 450;
-    const int REFERENCE_HEIGHT = 800;
+    const int REFERENCE_WIDTH = 350;
+    const int REFERENCE_HEIGHT = 500;
 
     // Target properties - adjusted for image-based target
     const float TARGET_RADIUS = 140.0f;  // Keep same radius for collision detection
