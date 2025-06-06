@@ -12,6 +12,7 @@
 
 class Renderer {
 public:
+    SDL_Renderer* getSDLRenderer() const;
     Renderer(SDL_Window* window);
     ~Renderer();
 
