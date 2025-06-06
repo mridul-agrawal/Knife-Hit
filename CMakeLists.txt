@@ -18,6 +18,7 @@ set(SOURCES
     src/Target.cpp
     src/Renderer.cpp
     src/FontManager.cpp  # ADD THIS LINE
+    src/GameConstants.cpp
 )
 
 # Add header files

@@ -141,6 +141,7 @@
   <ItemGroup>
     <ClCompile Include="src\FontManager.cpp" />
     <ClCompile Include="src\Game.cpp" />
+    <ClCompile Include="src\GameConstants.cpp" />
     <ClCompile Include="src\Knife.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Renderer.cpp" />

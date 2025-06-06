@@ -10,7 +10,7 @@ backgroundTexture(nullptr), targetTexture(nullptr), knifeTexture(nullptr) {}
 Renderer::~Renderer() {
     cleanupBackgroundTexture();
     cleanupTargetTexture();
-    cleanupKnifeTexture();  // NEW
+    cleanupKnifeTexture();
     if (renderer) {
         SDL_DestroyRenderer(renderer);
     }
@@ -51,10 +51,8 @@ bool Renderer::initialize() {
 }
 
 bool Renderer::loadBackgroundTexture() {
-    // Load the background image
-    SDL_Surface* surface = SDL_LoadBMP("/assets/images/background.bmp");
+    SDL_Surface* surface = SDL_LoadBMP("assets/images/background.bmp");
     if (!surface) {
-        // Try alternative path for Emscripten
         surface = SDL_LoadBMP("background.bmp");
     }
 
@@ -75,8 +73,7 @@ bool Renderer::loadBackgroundTexture() {
 }
 
 bool Renderer::loadTargetTexture() {
-    // Load the target image
-    SDL_Surface* surface = SDL_LoadBMP("/assets/images/target.bmp");
+    SDL_Surface* surface = SDL_LoadBMP("assets/images/target.bmp");
     if (!surface) {
         surface = SDL_LoadBMP("target.bmp");
     }
@@ -98,7 +95,7 @@ bool Renderer::loadTargetTexture() {
 }
 
 bool Renderer::loadKnifeTexture() {
-    SDL_Surface* surface = SDL_LoadBMP("/assets/images/knife.bmp");
+    SDL_Surface* surface = SDL_LoadBMP("assets/images/knife.bmp");
     if (!surface) {
         surface = SDL_LoadBMP("knife.bmp");
     }
@@ -154,22 +151,22 @@ void Renderer::renderBackground() {
         // Scale and render the background image to fit the screen
         SDL_FRect destRect = {
             0, 0,
-            static_cast<float>(GameConstants::SCREEN_WIDTH),
-            static_cast<float>(GameConstants::SCREEN_HEIGHT)
+            GameConstants::CURRENT_WIDTH,
+            GameConstants::CURRENT_HEIGHT
         };
         SDL_RenderTexture(renderer, backgroundTexture, nullptr, &destRect);
     }
     else {
         // Fallback to gradient background if image fails to load
-        for (int y = 0; y < GameConstants::SCREEN_HEIGHT; y++) {
-            float t = static_cast<float>(y) / GameConstants::SCREEN_HEIGHT;
+        for (int y = 0; y < static_cast<int>(GameConstants::CURRENT_HEIGHT); y++) {
+            float t = static_cast<float>(y) / GameConstants::CURRENT_HEIGHT;
 
             Uint8 r = static_cast<Uint8>(GameConstants::Colors::BACKGROUND_TOP.r * (1 - t) + GameConstants::Colors::BACKGROUND_BOTTOM.r * t);
             Uint8 g = static_cast<Uint8>(GameConstants::Colors::BACKGROUND_TOP.g * (1 - t) + GameConstants::Colors::BACKGROUND_BOTTOM.g * t);
             Uint8 b = static_cast<Uint8>(GameConstants::Colors::BACKGROUND_TOP.b * (1 - t) + GameConstants::Colors::BACKGROUND_BOTTOM.b * t);
 
             SDL_SetRenderDrawColor(renderer, r, g, b, 255);
-            SDL_RenderLine(renderer, 0, y, GameConstants::SCREEN_WIDTH, y);
+            SDL_RenderLine(renderer, 0, y, static_cast<int>(GameConstants::CURRENT_WIDTH), y);
         }
     }
 }
@@ -184,7 +181,7 @@ void Renderer::renderTarget(const Target& target) {
         // Calculate the destination rectangle (centered on target position)
         float diameter = radius * 2.0f;
         SDL_FRect destRect = {
-            centerX - radius,  // Center the image on target position
+            centerX - radius,
             centerY - radius,
             diameter,
             diameter
@@ -192,7 +189,7 @@ void Renderer::renderTarget(const Target& target) {
 
         // Create rotation point (center of the target)
         SDL_FPoint center = {
-            radius,  // Center point relative to destRect
+            radius,
             radius
         };
 
@@ -217,13 +214,14 @@ void Renderer::renderTarget(const Target& target) {
             }
         }
 
-        // Draw concentric rings
+        // Draw concentric rings (scaled)
         SDL_SetRenderDrawColor(renderer,
             GameConstants::Colors::WOOD_DARK.r,
             GameConstants::Colors::WOOD_DARK.g,
             GameConstants::Colors::WOOD_DARK.b, 255);
 
-        for (int ring = 20; ring < radiusInt; ring += 20) {
+        int ringSpacing = static_cast<int>(GameConstants::scaleUniform(20));
+        for (int ring = ringSpacing; ring < radiusInt; ring += ringSpacing) {
             for (int angle = 0; angle < 360; angle += 2) {
                 float radians = angle * M_PI / 180.0f;
                 int x = centerX + ring * cos(radians);
@@ -232,15 +230,16 @@ void Renderer::renderTarget(const Target& target) {
             }
         }
 
-        // Draw center bullseye
+        // Draw center bullseye (scaled)
         SDL_SetRenderDrawColor(renderer,
             GameConstants::Colors::RED.r,
             GameConstants::Colors::RED.g,
             GameConstants::Colors::RED.b, 255);
 
-        for (int w = -10; w <= 10; w++) {
-            for (int h = -10; h <= 10; h++) {
-                if ((w * w + h * h) <= 100) {
+        int bullseyeRadius = static_cast<int>(GameConstants::scaleUniform(10));
+        for (int w = -bullseyeRadius; w <= bullseyeRadius; w++) {
+            for (int h = -bullseyeRadius; h <= bullseyeRadius; h++) {
+                if ((w * w + h * h) <= (bullseyeRadius * bullseyeRadius)) {
                     SDL_RenderPoint(renderer, centerX + w, centerY + h);
                 }
             }
@@ -255,19 +254,22 @@ void Renderer::renderKnife(const Knife& knife, bool useRotation) {
     float y = knife.getY();
 
     if (knifeTexture) {
-        // Use knife image
+        // Use knife image with dynamic scaling
+        float knifeWidth = GameConstants::getKnifeWidth();
+        float knifeLength = GameConstants::getKnifeLength();
+
         SDL_FRect destRect = {
-            x - GameConstants::KNIFE_WIDTH / 2,
-            y - GameConstants::KNIFE_LENGTH / 2,
-            GameConstants::KNIFE_WIDTH,
-            GameConstants::KNIFE_LENGTH
+            x - knifeWidth / 2,
+            y - knifeLength / 2,
+            knifeWidth,
+            knifeLength
         };
 
         if (useRotation && knife.isKnifeStuck()) {
             // Render rotated stuck knife
             SDL_FPoint center = {
-                GameConstants::KNIFE_WIDTH / 2,
-                GameConstants::KNIFE_LENGTH / 2
+                knifeWidth / 2,
+                knifeLength / 2
             };
             SDL_RenderTextureRotated(renderer, knifeTexture, nullptr, &destRect,
                 knife.getRotation(), &center, SDL_FLIP_NONE);
@@ -278,22 +280,25 @@ void Renderer::renderKnife(const Knife& knife, bool useRotation) {
         }
     }
     else {
-        // Fallback to geometric rendering
+        // Fallback to geometric rendering with dynamic scaling
+        float knifeWidth = GameConstants::getKnifeWidth();
+        float knifeLength = GameConstants::getKnifeLength();
+
         SDL_SetRenderDrawColor(renderer, 139, 69, 19, 255);
         SDL_FRect handleRect = {
-            x - GameConstants::KNIFE_WIDTH / 2,
-            y + GameConstants::KNIFE_LENGTH / 3,
-            static_cast<float>(GameConstants::KNIFE_WIDTH),
-            static_cast<float>(GameConstants::KNIFE_LENGTH / 3)
+            x - knifeWidth / 2,
+            y + knifeLength / 3,
+            knifeWidth,
+            knifeLength / 3
         };
         SDL_RenderFillRect(renderer, &handleRect);
 
         SDL_SetRenderDrawColor(renderer, 192, 192, 192, 255);
         SDL_FRect bladeRect = {
-            x - GameConstants::KNIFE_WIDTH / 2,
-            y - GameConstants::KNIFE_LENGTH / 3,
-            static_cast<float>(GameConstants::KNIFE_WIDTH),
-            static_cast<float>(GameConstants::KNIFE_LENGTH * 2 / 3)
+            x - knifeWidth / 2,
+            y - knifeLength / 3,
+            knifeWidth,
+            knifeLength * 2 / 3
         };
         SDL_RenderFillRect(renderer, &bladeRect);
     }
@@ -302,38 +307,71 @@ void Renderer::renderKnife(const Knife& knife, bool useRotation) {
 void Renderer::renderKnives(const std::vector<Knife>& knives) {
     for (const auto& knife : knives) {
         if (knife.isKnifeStuck()) {
-            renderKnife(knife, true);  // CHANGED: Use rotation for stuck knives
+            renderKnife(knife, true);
         }
     }
 }
 
 void Renderer::renderKnifeIndicators(int knivesLeft) {
     if (!knifeTexture) {
-        // Fallback to original geometric indicators
-        // ... keep existing geometric code ...
+        // Fallback to geometric indicators with scaling
+        float startX = GameConstants::getUIMargin();
+        float startY = GameConstants::getKnifeIndicatorY();
+        float spacing = GameConstants::getKnifeIndicatorSpacing();
+        float knifeWidth = GameConstants::getKnifeWidth() * GameConstants::KNIFE_INDICATOR_SCALE;
+        float knifeLength = GameConstants::getKnifeLength() * GameConstants::KNIFE_INDICATOR_SCALE;
+
+        for (int i = 0; i < knivesLeft; i++) {
+            float knifeX = startX;
+            float knifeY = startY - (i * spacing);
+
+            // Draw handle
+            SDL_SetRenderDrawColor(renderer, 139, 69, 19, 255);
+            SDL_FRect handleRect = {
+                knifeX - knifeWidth / 2,
+                knifeY + knifeLength / 3,
+                knifeWidth,
+                knifeLength / 3
+            };
+            SDL_RenderFillRect(renderer, &handleRect);
+
+            // Draw blade
+            SDL_SetRenderDrawColor(renderer, 192, 192, 192, 255);
+            SDL_FRect bladeRect = {
+                knifeX - knifeWidth / 2,
+                knifeY - knifeLength / 3,
+                knifeWidth,
+                knifeLength * 2 / 3
+            };
+            SDL_RenderFillRect(renderer, &bladeRect);
+        }
         return;
     }
 
-    // Use knife image for indicators
-    float startX = 30.0f;
-    float startY = GameConstants::KNIFE_INDICATOR_Y;
+    // Use knife image for indicators with dynamic scaling
+    float startX = GameConstants::getUIMargin();
+    float startY = GameConstants::getKnifeIndicatorY();
+    float spacing = GameConstants::getKnifeIndicatorSpacing();
     float scale = GameConstants::KNIFE_INDICATOR_SCALE;
 
     for (int i = 0; i < knivesLeft; i++) {
         float knifeX = startX;
-        float knifeY = startY - (i * GameConstants::KNIFE_INDICATOR_SPACING);
+        float knifeY = startY - (i * spacing);
+
+        float scaledWidth = GameConstants::getKnifeWidth() * scale;
+        float scaledLength = GameConstants::getKnifeLength() * scale;
 
         SDL_FRect destRect = {
-            knifeX - (GameConstants::KNIFE_WIDTH * scale) / 2,
-            knifeY - (GameConstants::KNIFE_LENGTH * scale) / 2,
-            GameConstants::KNIFE_WIDTH * scale,
-            GameConstants::KNIFE_LENGTH * scale
+            knifeX - scaledWidth / 2,
+            knifeY - scaledLength / 2,
+            scaledWidth,
+            scaledLength
         };
 
         // Rotate 45 degrees for indicator style
         SDL_FPoint center = {
-            (GameConstants::KNIFE_WIDTH * scale) / 2,
-            (GameConstants::KNIFE_LENGTH * scale) / 2
+            scaledWidth / 2,
+            scaledLength / 2
         };
 
         SDL_RenderTextureRotated(renderer, knifeTexture, nullptr, &destRect,
@@ -383,24 +421,24 @@ void Renderer::renderMenu() {
     clear();
     renderBackground();
 
-    // Title with shadow effect
+    // Title with shadow effect (using dynamic positioning)
     SDL_Color shadowColor = { 0, 0, 0, 128 };
     SDL_Color titleColor = { 255, 255, 255, 255 };
 
-    renderText("KNIFE", GameConstants::SCREEN_WIDTH / 2,
-        GameConstants::SCREEN_HEIGHT / 3 - 40 + 4,
+    float centerX = GameConstants::CURRENT_WIDTH / 2;
+    float titleY = GameConstants::CURRENT_HEIGHT / 3;
+    float shadowOffset = GameConstants::scaleUniform(4);
+
+    renderText("KNIFE", centerX, titleY - GameConstants::scaleUniform(40) + shadowOffset,
         shadowColor, true, FontManager::TITLE_FONT);
 
-    renderText("KNIFE", GameConstants::SCREEN_WIDTH / 2,
-        GameConstants::SCREEN_HEIGHT / 3 - 40,
+    renderText("KNIFE", centerX, titleY - GameConstants::scaleUniform(40),
         titleColor, true, FontManager::TITLE_FONT);
 
-    renderText("HIT", GameConstants::SCREEN_WIDTH / 2,
-        GameConstants::SCREEN_HEIGHT / 3 + 40 + 4,
+    renderText("HIT", centerX, titleY + GameConstants::scaleUniform(40) + shadowOffset,
         shadowColor, true, FontManager::TITLE_FONT);
 
-    renderText("HIT", GameConstants::SCREEN_WIDTH / 2,
-        GameConstants::SCREEN_HEIGHT / 3 + 40,
+    renderText("HIT", centerX, titleY + GameConstants::scaleUniform(40),
         titleColor, true, FontManager::TITLE_FONT);
 
     // Pulsing effect for TAP TO PLAY
@@ -408,22 +446,22 @@ void Renderer::renderMenu() {
     Uint8 alpha = static_cast<Uint8>(128 + 127 * pulse);
     SDL_Color tapColor = { 255, 255, 255, alpha };
 
-    renderText("TAP TO PLAY", GameConstants::SCREEN_WIDTH / 2,
-        GameConstants::SCREEN_HEIGHT * 2 / 3,
+    renderText("TAP TO PLAY", centerX, GameConstants::CURRENT_HEIGHT * 2 / 3,
         tapColor, true, FontManager::UI_FONT);
 
     present();
 }
 
 void Renderer::renderHUD(int level, int score) {
-    // Stage indicator
+    // Stage indicator (using dynamic positioning)
     std::string stageText = "STAGE " + std::to_string(level);
-    renderText(stageText, 80, 40,
+    renderText(stageText, GameConstants::scaleUniform(80), GameConstants::getUITopMargin(),
         { 255, 255, 255, 255 }, true, FontManager::UI_FONT);
 
-    // Score number (removed apple)
+    // Score number (using dynamic positioning)
     renderText(std::to_string(score),
-        GameConstants::SCREEN_WIDTH - 100, 40,
+        GameConstants::CURRENT_WIDTH - GameConstants::scaleUniform(100),
+        GameConstants::getUITopMargin(),
         { 255, 255, 255, 255 }, true, FontManager::SCORE_FONT);
 }
 
@@ -439,17 +477,18 @@ void Renderer::renderGameOver(int score) {
     SDL_Color shadowColor = { 0, 0, 0, 200 };
     SDL_Color gameOverColor = { 255, 50, 50, 255 };
 
-    renderText("GAME OVER", GameConstants::SCREEN_WIDTH / 2,
-        GameConstants::SCREEN_HEIGHT / 2 - 100 + 4,
+    float centerX = GameConstants::CURRENT_WIDTH / 2;
+    float centerY = GameConstants::CURRENT_HEIGHT / 2;
+    float shadowOffset = GameConstants::scaleUniform(4);
+
+    renderText("GAME OVER", centerX, centerY - GameConstants::scaleUniform(100) + shadowOffset,
         shadowColor, true, FontManager::TITLE_FONT);
 
-    renderText("GAME OVER", GameConstants::SCREEN_WIDTH / 2,
-        GameConstants::SCREEN_HEIGHT / 2 - 100,
+    renderText("GAME OVER", centerX, centerY - GameConstants::scaleUniform(100),
         gameOverColor, true, FontManager::TITLE_FONT);
 
     std::string scoreText = "SCORE: " + std::to_string(score);
-    renderText(scoreText, GameConstants::SCREEN_WIDTH / 2,
-        GameConstants::SCREEN_HEIGHT / 2 - 20,
+    renderText(scoreText, centerX, centerY - GameConstants::scaleUniform(20),
         { 255, 255, 255, 255 }, true, FontManager::UI_FONT);
 
     // Pulsing restart button
@@ -457,8 +496,7 @@ void Renderer::renderGameOver(int score) {
     Uint8 alpha = static_cast<Uint8>(128 + 127 * pulse);
     SDL_Color restartColor = { 255, 255, 255, alpha };
 
-    renderText("TAP TO RESTART", GameConstants::SCREEN_WIDTH / 2,
-        GameConstants::SCREEN_HEIGHT / 2 + 60,
+    renderText("TAP TO RESTART", centerX, centerY + GameConstants::scaleUniform(60),
         restartColor, true, FontManager::UI_FONT);
 
     present();
@@ -475,29 +513,28 @@ void Renderer::renderLevelComplete() {
     SDL_Color shadowColor = { 0, 0, 0, 200 };
     SDL_Color successColor = { 76, 217, 100, 255 };
 
-    renderText("STAGE", GameConstants::SCREEN_WIDTH / 2,
-        GameConstants::SCREEN_HEIGHT / 2 - 50 + 4,
+    float centerX = GameConstants::CURRENT_WIDTH / 2;
+    float centerY = GameConstants::CURRENT_HEIGHT / 2;
+    float shadowOffset = GameConstants::scaleUniform(4);
+
+    renderText("STAGE", centerX, centerY - GameConstants::scaleUniform(50) + shadowOffset,
         shadowColor, true, FontManager::TITLE_FONT);
 
-    renderText("STAGE", GameConstants::SCREEN_WIDTH / 2,
-        GameConstants::SCREEN_HEIGHT / 2 - 50,
+    renderText("STAGE", centerX, centerY - GameConstants::scaleUniform(50),
         successColor, true, FontManager::TITLE_FONT);
 
-    renderText("COMPLETE!", GameConstants::SCREEN_WIDTH / 2,
-        GameConstants::SCREEN_HEIGHT / 2 + 20 + 4,
+    renderText("COMPLETE!", centerX, centerY + GameConstants::scaleUniform(20) + shadowOffset,
         shadowColor, true, FontManager::TITLE_FONT);
 
-    renderText("COMPLETE!", GameConstants::SCREEN_WIDTH / 2,
-        GameConstants::SCREEN_HEIGHT / 2 + 20,
+    renderText("COMPLETE!", centerX, centerY + GameConstants::scaleUniform(20),
         successColor, true, FontManager::TITLE_FONT);
 
-    // ADDED: Tap to continue instruction
+    // Tap to continue instruction
     float pulse = (sin(SDL_GetTicks() / 300.0f) + 1.0f) / 2.0f;
     Uint8 alpha = static_cast<Uint8>(128 + 127 * pulse);
     SDL_Color continueColor = { 255, 255, 255, alpha };
 
-    renderText("TAP TO CONTINUE", GameConstants::SCREEN_WIDTH / 2,
-        GameConstants::SCREEN_HEIGHT / 2 + 100,
+    renderText("TAP TO CONTINUE", centerX, centerY + GameConstants::scaleUniform(100),
         continueColor, true, FontManager::UI_FONT);
 
     present();
@@ -508,10 +545,10 @@ void Renderer::renderGame(const Target& target, const std::vector<Knife>& knives
     clear();
     renderBackground();
 
-    // CHANGED: Render stuck knives FIRST (behind target)
+    // Render stuck knives FIRST (behind target)
     renderKnives(knives);
 
-    // CHANGED: Render target AFTER knives (on top)
+    // Render target AFTER knives (on top)
     renderTarget(target);
 
     // Render current flying knife (always on top)
@@ -544,13 +581,13 @@ void Renderer::renderCollisionPause(const Target& target, const std::vector<Knif
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 100);  // Red overlay
     SDL_RenderFillRect(renderer, nullptr);
 
-    // Show collision message
+    // Show collision message (using dynamic positioning)
     SDL_Color collisionColor = { 255, 255, 255, 255 };
-    renderText("KNIFE", GameConstants::SCREEN_WIDTH / 2,
-        GameConstants::SCREEN_HEIGHT - 180,
+    float centerX = GameConstants::CURRENT_WIDTH / 2;
+
+    renderText("KNIFE", centerX, GameConstants::CURRENT_HEIGHT - GameConstants::scaleUniform(180),
         collisionColor, true, FontManager::TITLE_FONT);
-    renderText("COLLISION!", GameConstants::SCREEN_WIDTH / 2,
-        GameConstants::SCREEN_HEIGHT - 130,
+    renderText("COLLISION!", centerX, GameConstants::CURRENT_HEIGHT - GameConstants::scaleUniform(130),
         collisionColor, true, FontManager::TITLE_FONT);
 
     present();
