@@ -458,7 +458,7 @@ void Renderer::renderHUD(int level, int score) {
     renderText(stageText, GameConstants::getUIMargin() + GameConstants::scaleUniform(100), GameConstants::getUITopMargin(), {255, 255, 255, 255}, true, FontManager::UI_FONT);
 
     // Score number (using dynamic positioning)
-    renderText(std::to_string(score), GameConstants::CURRENT_WIDTH - GameConstants::scaleUniform(100), GameConstants::getUITopMargin(), { 255, 255, 255, 255 }, true, FontManager::SCORE_FONT);
+    // renderText(std::to_string(score), GameConstants::CURRENT_WIDTH - GameConstants::scaleUniform(100), GameConstants::getUITopMargin(), { 255, 255, 255, 255 }, true, FontManager::SCORE_FONT);
 }
 
 void Renderer::renderGameOver(int score) {
@@ -483,9 +483,9 @@ void Renderer::renderGameOver(int score) {
     renderText("GAME OVER", centerX, centerY - GameConstants::scaleUniform(150),
         gameOverColor, true, FontManager::TITLE_FONT);
 
-    std::string scoreText = "SCORE: " + std::to_string(score);
-    renderText(scoreText, centerX, centerY - GameConstants::scaleUniform(20),
-        { 255, 255, 255, 255 }, true, FontManager::UI_FONT);
+    // std::string scoreText = "SCORE: " + std::to_string(score);
+    // renderText(scoreText, centerX, centerY - GameConstants::scaleUniform(20),
+    //     { 255, 255, 255, 255 }, true, FontManager::UI_FONT);
 
     // Pulsing restart button
     float pulse = (sin(SDL_GetTicks() / 300.0f) + 1.0f) / 2.0f;
