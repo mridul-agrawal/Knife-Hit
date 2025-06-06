@@ -139,14 +139,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\CollisionDetector.cpp" />
     <ClCompile Include="src\FontManager.cpp" />
     <ClCompile Include="src\Game.cpp" />
+    <ClCompile Include="src\GameConstants.cpp" />
     <ClCompile Include="src\Knife.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
     <ClCompile Include="src\Target.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\CollisionDetector.hpp" />
     <ClInclude Include="include\FontManager.hpp" />
     <ClInclude Include="include\Game.hpp" />
     <ClInclude Include="include\GameConstants.hpp" />

@@ -7,6 +7,7 @@
 #include "Knife.hpp"
 #include "Target.hpp"
 #include "Renderer.hpp"
+#include "CollisionDetector.hpp" 
 
 enum class GameState {
     MENU,
@@ -21,7 +22,15 @@ public:
     Game();
     ~Game();
 
+    // Initialize with default dimensions
     bool initialize();
+
+    // Initialize with custom dimensions (for external calls)
+    bool initialize(float width, float height);
+
+    // Set screen dimensions (can be called by external systems)
+    void setScreenDimensions(float width, float height);
+
     void run();
     void cleanup();
     bool loop();
@@ -31,9 +40,13 @@ private:
     void update(float deltaTime);
     void handleInput();
     void throwKnife();
-    bool checkKnifeCollision();
     void initializeLevel();
-    void updateStuckKnives();  // NEW: Update positions of stuck knives
+    void updateStuckKnives();
+
+    // Internal initialization after dimensions are set
+    bool initializeInternal();
+    void stickKnifeAtCollisionPoint(const CollisionPoint& collisionPoint);
+    void completeSuccessfulThrow();
 
     SDL_Window* window;
     Renderer* renderer;
@@ -41,7 +54,7 @@ private:
 
     Target target;
     Knife currentKnife;
-    std::vector<Knife> stuckKnives;  // NEW: Store stuck knives
+    std::vector<Knife> stuckKnives;
 
     int level;
     int knivesLeft;
@@ -55,4 +68,9 @@ private:
 
     Uint64 lastTime;
     float gameTime;
+
+    // Screen dimensions
+    float screenWidth;
+    float screenHeight;
+    bool dimensionsSet;
 };

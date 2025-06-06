@@ -2,9 +2,9 @@
 #include <random>
 
 Target::Target()
-    : x(GameConstants::TARGET_X)
-    , y(GameConstants::TARGET_Y)
-    , radius(GameConstants::TARGET_RADIUS)
+    : x(GameConstants::getTargetX())
+    , y(GameConstants::getTargetY())
+    , radius(GameConstants::getTargetRadius())
     , rotation(0)
     , rotationSpeed(GameConstants::BASE_ROTATION_SPEED) {
 }
@@ -16,6 +16,11 @@ void Target::update(float deltaTime) {
 }
 
 void Target::reset(int level) {
+    // Update position and radius based on current scaling
+    x = GameConstants::getTargetX();
+    y = GameConstants::getTargetY();
+    radius = GameConstants::getTargetRadius();
+
     rotation = 0;
     rotationSpeed = GameConstants::BASE_ROTATION_SPEED + (level * GameConstants::ROTATION_SPEED_INCREMENT);
 
@@ -39,7 +44,7 @@ void Target::reset(int level) {
         for (int i = 0; i < preStuckKnives; i++) {
             float angle = angleDist(gen);
             stuckKnifeAngles.push_back(angle);
-            stuckKnifeDistances.push_back(GameConstants::KNIFE_TARGET_HIT_THRESHOLD);
+            stuckKnifeDistances.push_back(GameConstants::getTargetRadius());
         }
     }
 }
@@ -47,4 +52,4 @@ void Target::reset(int level) {
 void Target::addStuckKnife(float angle, float distance) {
     stuckKnifeAngles.push_back(angle);
     stuckKnifeDistances.push_back(distance);
-} 
+}
