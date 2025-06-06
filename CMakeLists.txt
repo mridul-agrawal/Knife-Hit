@@ -18,6 +18,8 @@ set(SOURCES
     src/Target.cpp
     src/Renderer.cpp
     src/FontManager.cpp  # ADD THIS LINE
+    src/GameConstants.cpp
+    src/CollisionDetector.cpp
 )
 
 # Add header files
@@ -28,6 +30,7 @@ set(HEADERS
     include/Renderer.hpp
     include/GameConstants.hpp
     include/FontManager.hpp  # ADD THIS LINE
+    include/CollisionDetector.hpp
 )
 
 # Create executable
