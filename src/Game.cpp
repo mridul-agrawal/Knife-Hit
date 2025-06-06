@@ -1,9 +1,11 @@
 ﻿#include "../include/Game.hpp"
 #include "../include/GameConstants.hpp"
+#include "../include/CollisionDetector.hpp"  // NEW: Include collision detector
 #include <iostream>
 #include <cmath>
 #include <vector>
 #include "../include/FontManager.hpp"
+#include <SDL3/SDL_render.h>
 
 Game::Game()
     : window(nullptr)
@@ -16,8 +18,11 @@ Game::Game()
     , lastTime(0)
     , gameTime(0)
     , collisionDetected(false)
-    , collisionPauseTimer(0.0f) 
-    , shouldExit(false) {     // NEW
+    , collisionPauseTimer(0.0f)
+    , shouldExit(false)
+    , screenWidth(1080.0f)
+    , screenHeight(1920.0f)
+    , dimensionsSet(false) {
 }
 
 Game::~Game() {
@@ -25,14 +30,39 @@ Game::~Game() {
 }
 
 bool Game::initialize() {
+    if (!dimensionsSet) {
+        setScreenDimensions(1080.0f, 1920.0f);
+    }
+    return initializeInternal();
+}
+
+bool Game::initialize(float width, float height) {
+    setScreenDimensions(width, height);
+    return initializeInternal();
+}
+
+void Game::setScreenDimensions(float width, float height) {
+    screenWidth = width;
+    screenHeight = height;
+    dimensionsSet = true;
+
+    GameConstants::setScreenDimensions(width, height);
+
+    std::cout << "Screen dimensions set to: " << width << "x" << height << std::endl;
+    std::cout << "Scale factors - X: " << GameConstants::SCALE_X
+        << ", Y: " << GameConstants::SCALE_Y
+        << ", Uniform: " << GameConstants::UNIFORM_SCALE << std::endl;
+}
+
+bool Game::initializeInternal() {
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         std::cout << "SDL3 could not initialize! Error: " << SDL_GetError() << std::endl;
         return false;
     }
 
     window = SDL_CreateWindow("Knife Hit",
-        GameConstants::SCREEN_WIDTH,
-        GameConstants::SCREEN_HEIGHT,
+        static_cast<int>(screenWidth),
+        static_cast<int>(screenHeight),
         SDL_WINDOW_HIGH_PIXEL_DENSITY);
 
     if (!window) {
@@ -40,13 +70,17 @@ bool Game::initialize() {
         return false;
     }
 
-    // Set window to centered position
     SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 
     renderer = new Renderer(window);
     if (!renderer->initialize()) {
         return false;
     }
+
+    SDL_SetRenderLogicalPresentation(renderer->getSDLRenderer(),
+        static_cast<int>(screenWidth),
+        static_cast<int>(screenHeight),
+        SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
     lastTime = SDL_GetTicksNS();
     initializeLevel();
@@ -105,18 +139,17 @@ void Game::handleInput() {
         break;
 
     case GameState::GAME_OVER:
-        // Reset game state
         level = 1;
         score = 0;
-        stuckKnives.clear();  // Clear stuck knives
+        stuckKnives.clear();
         initializeLevel();
         currentState = GameState::MENU;
         break;
 
     case GameState::LEVEL_COMPLETE:
         level++;
-        score += GameConstants::LEVEL_COMPLETE_BONUS;  // Bonus points
-        stuckKnives.clear();  // FIXED: Clear stuck knives before initializing new level
+        score += GameConstants::LEVEL_COMPLETE_BONUS;
+        stuckKnives.clear();
         initializeLevel();
         currentState = GameState::PLAYING;
         break;
@@ -124,17 +157,16 @@ void Game::handleInput() {
 }
 
 void Game::update(float deltaTime) {
-
     // Handle collision pause state
     if (currentState == GameState::COLLISION_PAUSE) {
-        collisionPauseTimer -= deltaTime;
-        target.update(deltaTime);  // Keep target rotating during pause
-        updateStuckKnives();       // Keep knives rotating with target
+        // collisionPauseTimer -= deltaTime;
+        target.update(deltaTime);
+        updateStuckKnives();
 
         /*if (collisionPauseTimer <= 0) {
             currentState = GameState::GAME_OVER;
         }*/
-        return;  // Don't process other game logic during pause
+        return;
     }
 
     if (currentState != GameState::PLAYING) return;
@@ -142,150 +174,67 @@ void Game::update(float deltaTime) {
     gameTime += deltaTime;
     target.update(deltaTime);
     currentKnife.update(deltaTime);
-
-    // Update stuck knives positions as target rotates
     updateStuckKnives();
 
+    // NEW COLLISION DETECTION SYSTEM
     if (currentKnife.isKnifeActive() && !currentKnife.isKnifeStuck()) {
-        
-        // FIXED: Check if knife tip reaches the edge of target
-        float knifeBottom = currentKnife.getY() + GameConstants::KNIFE_LENGTH / 2;
-        float knifeTop = currentKnife.getY() - GameConstants::KNIFE_IMAGE_TIP_OFFSET;
-        float targetEdge = target.getY() + target.getRadius();
 
-        if (knifeTop >= targetEdge - GameConstants::KNIFE_TARGET_HIT_THRESHOLD &&
-            currentKnife.getY() <= target.getY() + target.getRadius() + 30) {
+        // Check if knife has reached target
+        CollisionResult targetCollision = CollisionDetector::checkKnifeTargetCollision(currentKnife, target);
 
-            // Check collision with stuck knives ONLY when knife reaches target
-            //if (checkKnifeCollision()) {
-            //    // Don't immediately go to game over - pause for visual feedback
-            //    collisionDetected = true;
-            //    collisionPauseTimer = COLLISION_PAUSE_DURATION;
-            //    currentState = GameState::COLLISION_PAUSE;
+        if (targetCollision.hasCollision) {
 
-            //    // Still stick the knife at collision point for visual feedback
-            //    float angle = atan2(currentKnife.getY() - target.getY(),
-            //        currentKnife.getX() - target.getX()) * 180.0f / M_PI;
-            //    angle -= target.getRotation();
-            //    if (angle < 0) angle += 360;
+            // Check for knife-knife collision
+            if (CollisionDetector::checkKnifeKnifeCollision(currentKnife, stuckKnives, target)) {
+                // Collision detected - start pause before game over
+                collisionDetected = true;
+                collisionPauseTimer = COLLISION_PAUSE_DURATION;
+                currentState = GameState::COLLISION_PAUSE;
 
-            //    currentKnife.stick(target.getX(), target.getY(), target.getRotation());
-            //    target.addStuckKnife(angle, GameConstants::TARGET_RADIUS);
-            //    stuckKnives.push_back(currentKnife);
+                // Still stick the knife for visual feedback
+                stickKnifeAtCollisionPoint(targetCollision.point);
+                return;
+            }
 
-            //    return;
-            //}
-
-            // Calculate angle and stick the knife AT THE EDGE
-            float angle = atan2(currentKnife.getY() - target.getY(),
-                currentKnife.getX() - target.getX()) * 180.0f / M_PI;
-            angle -= target.getRotation();
-            if (angle < 0) angle += 360;
-
-            // Position knife at the edge of the target
-            currentKnife.stick(target.getX(), target.getY(), target.getRotation());
-            target.addStuckKnife(angle, GameConstants::TARGET_RADIUS);
-
-            // Add to stuck knives collection
-            stuckKnives.push_back(currentKnife);
-
-            // Reset for next throw
-            currentKnife = Knife();
-            currentKnife.reset();
-            currentKnife.setActive(true);
-
-            score += GameConstants::POINTS_PER_KNIFE;
-            canThrow = true;
-
-           /* if (knivesLeft <= 0) {
-                currentState = GameState::LEVEL_COMPLETE;
-            }*/
+            // No collision - stick knife successfully
+            stickKnifeAtCollisionPoint(targetCollision.point);
+            completeSuccessfulThrow();
         }
     }
 }
 
-bool Game::checkKnifeCollision() {
-    if (stuckKnives.empty()) {
-        std::cout << "No stuck knives to check collision against" << std::endl;
-        return false;
-    }
+// NEW: Clean method to stick knife at collision point
+void Game::stickKnifeAtCollisionPoint(const CollisionPoint& collisionPoint) {
+    currentKnife.stick(target.getX(), target.getY(), target.getRotation());
+    target.addStuckKnife(collisionPoint.angle, GameConstants::getTargetRadius());
+    stuckKnives.push_back(currentKnife);
+}
 
-    std::cout << "\n=== COLLISION CHECK START ===" << std::endl;
-    std::cout << "Number of stuck knives: " << stuckKnives.size() << std::endl;
-    std::cout << "Collision threshold: " << GameConstants::SPATIAL_COLLISION_THRESHOLD << "px" << std::endl;
+// NEW: Clean method to handle successful knife throw
+void Game::completeSuccessfulThrow() {
+    // Reset for next throw
+    currentKnife = Knife();
+    currentKnife.reset();
+    currentKnife.setActive(true);
 
-    // Get current knife position and target info
-    float incomingX = currentKnife.getX();
-    float incomingY = currentKnife.getY();
-    float targetX = target.getX();
-    float targetY = target.getY();
-    float targetRotation = target.getRotation();
+    score += GameConstants::POINTS_PER_KNIFE;
+    canThrow = true;
 
-    std::cout << "Incoming knife pos: (" << incomingX << ", " << incomingY << ")" << std::endl;
-    std::cout << "Target pos: (" << targetX << ", " << targetY << "), rotation: " << targetRotation << "°" << std::endl;
-
-    // Calculate incoming knife's angle relative to target
-    float incomingAngle = atan2(incomingY - targetY, incomingX - targetX) * 180.0f / M_PI;
-    float originalAngle = incomingAngle;
-
-    // Normalize the angle relative to target's current rotation
-    incomingAngle -= targetRotation;
-    if (incomingAngle < 0) incomingAngle += 360;
-    if (incomingAngle >= 360) incomingAngle -= 360;
-
-    std::cout << "Incoming knife angle: " << originalAngle << "° (absolute) -> " << incomingAngle << "° (relative)" << std::endl;
-
-    // Check against each stuck knife
-    for (size_t i = 0; i < stuckKnives.size(); i++) {
-        const auto& stuckKnife = stuckKnives[i];
-        float stuckAngle = stuckKnife.getStuckAngle();
-
-        std::cout << "\nChecking against stuck knife " << i << ":" << std::endl;
-        std::cout << "  Stuck angle: " << stuckAngle << "°" << std::endl;
-
-        // Calculate angular difference
-        float angleDiff = std::abs(incomingAngle - stuckAngle);
-        if (angleDiff > 180) {
-            angleDiff = 360 - angleDiff;
-        }
-
-        std::cout << "  Angular difference: " << angleDiff << "°" << std::endl;
-
-        // Convert angular difference to physical distance at handle position
-        float handleRadius = GameConstants::TARGET_RADIUS + GameConstants::KNIFE_IMAGE_HANDLE_OFFSET;
-        float physicalSeparation = (angleDiff * M_PI / 180.0f) * handleRadius;
-
-        std::cout << "  Handle radius: " << handleRadius << "px" << std::endl;
-        std::cout << "  Physical separation: " << physicalSeparation << "px" << std::endl;
-        std::cout << "  Collision threshold: " << GameConstants::SPATIAL_COLLISION_THRESHOLD << "px" << std::endl;
-
-        // Check if handles would overlap/collide
-        if (physicalSeparation < GameConstants::SPATIAL_COLLISION_THRESHOLD) {
-            std::cout << "  🔴 COLLISION! " << physicalSeparation << " < " << GameConstants::SPATIAL_COLLISION_THRESHOLD << std::endl;
-            std::cout << "=== COLLISION CHECK END (COLLISION FOUND) ===" << std::endl;
-            return true;
-        }
-        else {
-            std::cout << "  ✅ No collision with this knife" << std::endl;
-        }
-    }
-
-    std::cout << "✅ No collisions detected with any stuck knife" << std::endl;
-    std::cout << "=== COLLISION CHECK END (NO COLLISION) ===" << std::endl;
-    return false;
+    /*if (knivesLeft <= 0) {
+        currentState = GameState::LEVEL_COMPLETE;
+    }*/
 }
 
 void Game::updateStuckKnives() {
-    // Update all stuck knives to rotate with the target
     for (auto& knife : stuckKnives) {
         knife.updateStuckPosition(target.getX(), target.getY(), target.getRotation());
     }
 }
 
 void Game::throwKnife() {
-    if (!canThrow || knivesLeft <= 0) return;  // Safety check
+    if (!canThrow || knivesLeft <= 0) return;
 
-    currentKnife.setVelocityY(-GameConstants::KNIFE_SPEED);
+    currentKnife.setVelocityY(-GameConstants::getKnifeSpeed());
     currentKnife.setActive(true);
     canThrow = false;
     // knivesLeft--;
@@ -293,33 +242,29 @@ void Game::throwKnife() {
 
 void Game::initializeLevel() {
     target.reset(level);
-    currentKnife = Knife(); // Reset knife to starting position
-    stuckKnives.clear();  // Clear stuck knives for new level
+    currentKnife = Knife();
+    stuckKnives.clear();
     knivesLeft = GameConstants::KNIVES_PER_LEVEL;
     canThrow = true;
 
-    // NEW: Reset collision state
     collisionDetected = false;
     collisionPauseTimer = 0.0f;
 
-    // FIXED: Ensure knife is properly positioned and visible
-    currentKnife.reset(); // Make sure knife is at starting position
-    currentKnife.setActive(true); // Make sure knife is active and visible
+    currentKnife.reset();
+    currentKnife.setActive(true);
 }
 
 void Game::run() {
 #ifdef __EMSCRIPTEN__
-    // Emscripten will handle the main loop
     return;
 #else
     while (!shouldExit) {
         if (!loop()) break;
-        SDL_Delay(16);  // ~60 FPS
+        SDL_Delay(16);
     }
 #endif
 }
 
-// NEW METHOD - Add this to Game.cpp
 bool Game::loop() {
     handleEvents();
 
