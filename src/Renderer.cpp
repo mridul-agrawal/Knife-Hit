@@ -51,7 +51,7 @@ bool Renderer::initialize() {
 }
 
 bool Renderer::loadBackgroundTexture() {
-    SDL_Surface* surface = SDL_LoadBMP("assets/images/background.bmp");
+    SDL_Surface* surface = SDL_LoadBMP("/assets/images/background.bmp");
     if (!surface) {
         surface = SDL_LoadBMP("background.bmp");
     }
@@ -73,7 +73,7 @@ bool Renderer::loadBackgroundTexture() {
 }
 
 bool Renderer::loadTargetTexture() {
-    SDL_Surface* surface = SDL_LoadBMP("assets/images/target.bmp");
+    SDL_Surface* surface = SDL_LoadBMP("/assets/images/target.bmp");
     if (!surface) {
         surface = SDL_LoadBMP("target.bmp");
     }
@@ -95,7 +95,7 @@ bool Renderer::loadTargetTexture() {
 }
 
 bool Renderer::loadKnifeTexture() {
-    SDL_Surface* surface = SDL_LoadBMP("assets/images/knife.bmp");
+    SDL_Surface* surface = SDL_LoadBMP("/assets/images/knife.bmp");
     if (!surface) {
         surface = SDL_LoadBMP("knife.bmp");
     }

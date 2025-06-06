@@ -19,19 +19,19 @@ bool FontManager::initialize() {
     std::cout << "Score: " << scoreSize << "px (ref: " << GameConstants::REF_SCORE_FONT_SIZE << "px)" << std::endl;
 
     // Try primary paths first, then fallback paths
-    if (!loadFont(TITLE_FONT, "assets/fonts/Fredoka-Bold.ttf", titleSize) &&
+    if (!loadFont(TITLE_FONT, "/assets/fonts/Fredoka-Bold.ttf", titleSize) &&
         !loadFont(TITLE_FONT, "Fredoka-Bold.ttf", titleSize)) {
         std::cerr << "Failed to load title font!" << std::endl;
         return false;
     }
 
-    if (!loadFont(UI_FONT, "assets/fonts/Rubik-Medium.ttf", uiSize) &&
+    if (!loadFont(UI_FONT, "/assets/fonts/Rubik-Medium.ttf", uiSize) &&
         !loadFont(UI_FONT, "Rubik-Medium.ttf", uiSize)) {
         std::cerr << "Failed to load UI font!" << std::endl;
         return false;
     }
 
-    if (!loadFont(SCORE_FONT, "assets/fonts/Rubik-Bold.ttf", scoreSize) &&
+    if (!loadFont(SCORE_FONT, "/assets/fonts/Rubik-Bold.ttf", scoreSize) &&
         !loadFont(SCORE_FONT, "Rubik-Bold.ttf", scoreSize)) {
         std::cerr << "Failed to load score font!" << std::endl;
         return false;
