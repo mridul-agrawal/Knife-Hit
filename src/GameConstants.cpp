@@ -103,7 +103,16 @@ namespace GameConstants {
         return scaleUniform(REF_KNIFE_INDICATOR_SPACING);
     }
 
-    // Collision detection
+    // Collision detection (only implemented for variables that are actually used)
+    float getKnifeTargetHitThreshold() {
+        return scaleUniform(REF_KNIFE_TARGET_HIT_THRESHOLD);
+    }
+
+    float getSpatialCollisionThreshold() {
+        return scaleUniform(REF_SPATIAL_COLLISION_THRESHOLD);
+    }
+
+    /* COMMENTED OUT - These functions are for unused constants:
     float getKnifeHandleWidth() {
         return scaleUniform(REF_KNIFE_HANDLE_WIDTH);
     }
@@ -119,12 +128,5 @@ namespace GameConstants {
     float getBladeWidth() {
         return scaleUniform(REF_BLADE_WIDTH);
     }
-
-    float getKnifeTargetHitThreshold() {
-        return scaleUniform(REF_KNIFE_TARGET_HIT_THRESHOLD);
-    }
-
-    float getSpatialCollisionThreshold() {
-        return scaleUniform(REF_SPATIAL_COLLISION_THRESHOLD);
-    }
+    */
 }

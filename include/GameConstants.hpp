@@ -62,7 +62,7 @@ namespace GameConstants {
     // === REFERENCE UI POSITIONING ===
     // UI margins and spacing (based on reference resolution)
     const float REF_UI_MARGIN = 60.0f;           // General UI margin from screen edges
-    const float REF_UI_LINE_HEIGHT = 70.0f;      // Height between UI text lines
+    const float REF_UI_LINE_HEIGHT = 80.0f;      // Height between UI text lines
     const float REF_UI_TOP_MARGIN = 80.0f;       // Top margin for UI elements
 
     // Knife indicator positioning
@@ -72,12 +72,15 @@ namespace GameConstants {
 
     // === COLLISION DETECTION ===
     // Collision thresholds (will be scaled dynamically)
-    const float REF_KNIFE_HANDLE_WIDTH = 30.0f;        // Width of knife handle for collision
-    const float REF_KNIFE_HANDLE_LENGTH = 50.0f;       // Length of knife handle for collision
-    const float REF_HANDLE_COLLISION_BUFFER = 10.0f;   // Extra buffer for handle collision
-    const float REF_BLADE_WIDTH = 10.0f;               // Width of knife blade
+    // NOTE: These box-based collision constants are currently unused.
+    // The system uses angular collision detection instead.
+    // const float REF_KNIFE_HANDLE_WIDTH = 30.0f;        // Width of knife handle for collision (UNUSED)
+    // const float REF_KNIFE_HANDLE_LENGTH = 50.0f;       // Length of knife handle for collision (UNUSED)
+    // const float REF_HANDLE_COLLISION_BUFFER = 10.0f;   // Extra buffer for handle collision (UNUSED)
+    // const float REF_BLADE_WIDTH = 10.0f;               // Width of knife blade (UNUSED)
+
     const float REF_KNIFE_TARGET_HIT_THRESHOLD = 10.0f; // Distance threshold for target hits
-    const float REF_SPATIAL_COLLISION_THRESHOLD = 50.0f; // Minimum separation between knife handles
+    const float REF_SPATIAL_COLLISION_THRESHOLD = 50.0f; // Minimum separation between knife handles (angular system)
 
     // === GAME TIMING ===
     const float COLLISION_PAUSE_DURATION = 2.5f;  // Duration of collision pause in seconds
@@ -109,13 +112,15 @@ namespace GameConstants {
     float getKnifeIndicatorY();
     float getKnifeIndicatorSpacing();
 
-    // Collision detection
-    float getKnifeHandleWidth();
-    float getKnifeHandleLength();
-    float getHandleCollisionBuffer();
-    float getBladeWidth();
+    // Collision detection (only the ones actually used)
     float getKnifeTargetHitThreshold();
     float getSpatialCollisionThreshold();
+
+    // NOTE: These getters are commented out as the corresponding constants are unused:
+    // float getKnifeHandleWidth();
+    // float getKnifeHandleLength(); 
+    // float getHandleCollisionBuffer();
+    // float getBladeWidth();
 
     // Colors namespace (unchanged as colors don't need scaling)
     namespace Colors {

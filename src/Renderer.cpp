@@ -429,16 +429,16 @@ void Renderer::renderMenu() {
     float titleY = GameConstants::CURRENT_HEIGHT / 3;
     float shadowOffset = GameConstants::scaleUniform(4);
 
-    renderText("KNIFE", centerX, titleY - GameConstants::scaleUniform(40) + shadowOffset,
+    renderText("KNIFE", centerX, titleY - GameConstants::getUILineHeight() + shadowOffset,
         shadowColor, true, FontManager::TITLE_FONT);
 
-    renderText("KNIFE", centerX, titleY - GameConstants::scaleUniform(40),
+    renderText("KNIFE", centerX, titleY - GameConstants::getUILineHeight(),
         titleColor, true, FontManager::TITLE_FONT);
 
-    renderText("HIT", centerX, titleY + GameConstants::scaleUniform(40) + shadowOffset,
+    renderText("HIT", centerX, titleY + GameConstants::getUILineHeight() + shadowOffset,
         shadowColor, true, FontManager::TITLE_FONT);
 
-    renderText("HIT", centerX, titleY + GameConstants::scaleUniform(40),
+    renderText("HIT", centerX, titleY + GameConstants::getUILineHeight(),
         titleColor, true, FontManager::TITLE_FONT);
 
     // Pulsing effect for TAP TO PLAY
@@ -455,14 +455,10 @@ void Renderer::renderMenu() {
 void Renderer::renderHUD(int level, int score) {
     // Stage indicator (using dynamic positioning)
     std::string stageText = "STAGE " + std::to_string(level);
-    renderText(stageText, GameConstants::scaleUniform(80), GameConstants::getUITopMargin(),
-        { 255, 255, 255, 255 }, true, FontManager::UI_FONT);
+    renderText(stageText, GameConstants::getUIMargin() + GameConstants::scaleUniform(100), GameConstants::getUITopMargin(), {255, 255, 255, 255}, true, FontManager::UI_FONT);
 
     // Score number (using dynamic positioning)
-    renderText(std::to_string(score),
-        GameConstants::CURRENT_WIDTH - GameConstants::scaleUniform(100),
-        GameConstants::getUITopMargin(),
-        { 255, 255, 255, 255 }, true, FontManager::SCORE_FONT);
+    renderText(std::to_string(score), GameConstants::CURRENT_WIDTH - GameConstants::scaleUniform(100), GameConstants::getUITopMargin(), { 255, 255, 255, 255 }, true, FontManager::SCORE_FONT);
 }
 
 void Renderer::renderGameOver(int score) {
@@ -481,10 +477,10 @@ void Renderer::renderGameOver(int score) {
     float centerY = GameConstants::CURRENT_HEIGHT / 2;
     float shadowOffset = GameConstants::scaleUniform(4);
 
-    renderText("GAME OVER", centerX, centerY - GameConstants::scaleUniform(100) + shadowOffset,
+    renderText("GAME OVER", centerX, centerY - GameConstants::scaleUniform(150) + shadowOffset,
         shadowColor, true, FontManager::TITLE_FONT);
 
-    renderText("GAME OVER", centerX, centerY - GameConstants::scaleUniform(100),
+    renderText("GAME OVER", centerX, centerY - GameConstants::scaleUniform(150),
         gameOverColor, true, FontManager::TITLE_FONT);
 
     std::string scoreText = "SCORE: " + std::to_string(score);
@@ -496,7 +492,7 @@ void Renderer::renderGameOver(int score) {
     Uint8 alpha = static_cast<Uint8>(128 + 127 * pulse);
     SDL_Color restartColor = { 255, 255, 255, alpha };
 
-    renderText("TAP TO RESTART", centerX, centerY + GameConstants::scaleUniform(60),
+    renderText("TAP TO RESTART", centerX, centerY + GameConstants::scaleUniform(90),
         restartColor, true, FontManager::UI_FONT);
 
     present();
@@ -517,10 +513,10 @@ void Renderer::renderLevelComplete() {
     float centerY = GameConstants::CURRENT_HEIGHT / 2;
     float shadowOffset = GameConstants::scaleUniform(4);
 
-    renderText("STAGE", centerX, centerY - GameConstants::scaleUniform(50) + shadowOffset,
+    renderText("STAGE", centerX, centerY - GameConstants::scaleUniform(100) + shadowOffset,
         shadowColor, true, FontManager::TITLE_FONT);
 
-    renderText("STAGE", centerX, centerY - GameConstants::scaleUniform(50),
+    renderText("STAGE", centerX, centerY - GameConstants::scaleUniform(100),
         successColor, true, FontManager::TITLE_FONT);
 
     renderText("COMPLETE!", centerX, centerY + GameConstants::scaleUniform(20) + shadowOffset,
@@ -534,7 +530,7 @@ void Renderer::renderLevelComplete() {
     Uint8 alpha = static_cast<Uint8>(128 + 127 * pulse);
     SDL_Color continueColor = { 255, 255, 255, alpha };
 
-    renderText("TAP TO CONTINUE", centerX, centerY + GameConstants::scaleUniform(100),
+    renderText("TAP TO CONTINUE", centerX, centerY + GameConstants::scaleUniform(150),
         continueColor, true, FontManager::UI_FONT);
 
     present();
@@ -585,7 +581,7 @@ void Renderer::renderCollisionPause(const Target& target, const std::vector<Knif
     SDL_Color collisionColor = { 255, 255, 255, 255 };
     float centerX = GameConstants::CURRENT_WIDTH / 2;
 
-    renderText("KNIFE", centerX, GameConstants::CURRENT_HEIGHT - GameConstants::scaleUniform(180),
+    renderText("KNIFE", centerX, GameConstants::CURRENT_HEIGHT - GameConstants::scaleUniform(300),
         collisionColor, true, FontManager::TITLE_FONT);
     renderText("COLLISION!", centerX, GameConstants::CURRENT_HEIGHT - GameConstants::scaleUniform(130),
         collisionColor, true, FontManager::TITLE_FONT);

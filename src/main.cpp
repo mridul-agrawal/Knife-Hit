@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
     // Uncomment any of these to test different screen sizes:
 
     // Phone portrait (9:16 aspect ratio)
-     width = 225; height = 400;
+    width = 225; height = 400;
 
     // Tablet portrait (3:4 aspect ratio)
     // width = 768; height = 1024;
@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
     // width = 1280; height = 720;
 
     // Ultra-wide (21:9 aspect ratio)
-    // width = 1920; height = 822;
+    //  width = 1800; height = 822;
 
     std::cout << "Initializing game with dimensions: " << width << "x" << height << std::endl;
 
