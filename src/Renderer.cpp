@@ -454,8 +454,8 @@ void Renderer::renderMenu() {
 
 void Renderer::renderHUD(int level, int score) {
     // Stage indicator (using dynamic positioning)
-    std::string stageText = "STAGE " + std::to_string(level);
-    renderText(stageText, GameConstants::getUIMargin() + GameConstants::scaleUniform(100), GameConstants::getUITopMargin(), {255, 255, 255, 255}, true, FontManager::UI_FONT);
+    // std::string stageText = "STAGE " + std::to_string(level);
+    // renderText(stageText, GameConstants::getUIMargin() + GameConstants::scaleUniform(100), GameConstants::getUITopMargin(), {255, 255, 255, 255}, true, FontManager::UI_FONT);
 
     // Score number (using dynamic positioning)
     // renderText(std::to_string(score), GameConstants::CURRENT_WIDTH - GameConstants::scaleUniform(100), GameConstants::getUITopMargin(), { 255, 255, 255, 255 }, true, FontManager::SCORE_FONT);

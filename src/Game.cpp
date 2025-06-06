@@ -159,13 +159,13 @@ void Game::handleInput() {
 void Game::update(float deltaTime) {
     // Handle collision pause state
     if (currentState == GameState::COLLISION_PAUSE) {
-        collisionPauseTimer -= deltaTime;
+        // collisionPauseTimer -= deltaTime;
         target.update(deltaTime);
         updateStuckKnives();
 
-        if (collisionPauseTimer <= 0) {
+        /*if (collisionPauseTimer <= 0) {
             currentState = GameState::GAME_OVER;
-        }
+        }*/
         return;
     }
 
@@ -220,9 +220,9 @@ void Game::completeSuccessfulThrow() {
     score += GameConstants::POINTS_PER_KNIFE;
     canThrow = true;
 
-    if (knivesLeft <= 0) {
+    /*if (knivesLeft <= 0) {
         currentState = GameState::LEVEL_COMPLETE;
-    }
+    }*/
 }
 
 void Game::updateStuckKnives() {
@@ -237,7 +237,7 @@ void Game::throwKnife() {
     currentKnife.setVelocityY(-GameConstants::getKnifeSpeed());
     currentKnife.setActive(true);
     canThrow = false;
-    knivesLeft--;
+    // knivesLeft--;
 }
 
 void Game::initializeLevel() {
