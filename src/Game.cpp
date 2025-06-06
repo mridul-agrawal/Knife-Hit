@@ -185,16 +185,16 @@ void Game::update(float deltaTime) {
         if (targetCollision.hasCollision) {
 
             // Check for knife-knife collision
-            if (CollisionDetector::checkKnifeKnifeCollision(currentKnife, stuckKnives, target)) {
-                // Collision detected - start pause before game over
-                collisionDetected = true;
-                collisionPauseTimer = COLLISION_PAUSE_DURATION;
-                currentState = GameState::COLLISION_PAUSE;
+            //if (CollisionDetector::checkKnifeKnifeCollision(currentKnife, stuckKnives, target)) {
+            //    // Collision detected - start pause before game over
+            //    collisionDetected = true;
+            //    collisionPauseTimer = COLLISION_PAUSE_DURATION;
+            //    currentState = GameState::COLLISION_PAUSE;
 
-                // Still stick the knife for visual feedback
-                stickKnifeAtCollisionPoint(targetCollision.point);
-                return;
-            }
+            //    // Still stick the knife for visual feedback
+            //    stickKnifeAtCollisionPoint(targetCollision.point);
+            //    return;
+            //}
 
             // No collision - stick knife successfully
             stickKnifeAtCollisionPoint(targetCollision.point);
