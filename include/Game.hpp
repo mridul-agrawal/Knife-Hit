@@ -7,6 +7,7 @@
 #include "Knife.hpp"
 #include "Target.hpp"
 #include "Renderer.hpp"
+#include "CollisionDetector.hpp" 
 
 enum class GameState {
     MENU,
@@ -39,12 +40,13 @@ private:
     void update(float deltaTime);
     void handleInput();
     void throwKnife();
-    bool checkKnifeCollision();
     void initializeLevel();
     void updateStuckKnives();
 
     // Internal initialization after dimensions are set
     bool initializeInternal();
+    void stickKnifeAtCollisionPoint(const CollisionPoint& collisionPoint);
+    void completeSuccessfulThrow();
 
     SDL_Window* window;
     Renderer* renderer;

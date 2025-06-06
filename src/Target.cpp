@@ -44,7 +44,7 @@ void Target::reset(int level) {
         for (int i = 0; i < preStuckKnives; i++) {
             float angle = angleDist(gen);
             stuckKnifeAngles.push_back(angle);
-            stuckKnifeDistances.push_back(GameConstants::getKnifeTargetHitThreshold());
+            stuckKnifeDistances.push_back(GameConstants::getTargetRadius());
         }
     }
 }

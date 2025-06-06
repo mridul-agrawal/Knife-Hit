@@ -13,11 +13,9 @@ namespace GameConstants {
         CURRENT_WIDTH = width;
         CURRENT_HEIGHT = height;
 
-        // Calculate scaling factors
         SCALE_X = width / REFERENCE_WIDTH;
         SCALE_Y = height / REFERENCE_HEIGHT;
 
-        // Use minimum scale for uniform scaling to maintain aspect ratio
         UNIFORM_SCALE = std::min(SCALE_X, SCALE_Y);
     }
 
@@ -34,7 +32,6 @@ namespace GameConstants {
     }
 
     float scaleFont(float baseSize) {
-        // Use uniform scaling for fonts to maintain readability
         return baseSize * UNIFORM_SCALE;
     }
 
@@ -102,31 +99,4 @@ namespace GameConstants {
     float getKnifeIndicatorSpacing() {
         return scaleUniform(REF_KNIFE_INDICATOR_SPACING);
     }
-
-    // Collision detection (only implemented for variables that are actually used)
-    float getKnifeTargetHitThreshold() {
-        return scaleUniform(REF_KNIFE_TARGET_HIT_THRESHOLD);
-    }
-
-    float getSpatialCollisionThreshold() {
-        return scaleUniform(REF_SPATIAL_COLLISION_THRESHOLD);
-    }
-
-    /* COMMENTED OUT - These functions are for unused constants:
-    float getKnifeHandleWidth() {
-        return scaleUniform(REF_KNIFE_HANDLE_WIDTH);
-    }
-
-    float getKnifeHandleLength() {
-        return scaleUniform(REF_KNIFE_HANDLE_LENGTH);
-    }
-
-    float getHandleCollisionBuffer() {
-        return scaleUniform(REF_HANDLE_COLLISION_BUFFER);
-    }
-
-    float getBladeWidth() {
-        return scaleUniform(REF_BLADE_WIDTH);
-    }
-    */
 }

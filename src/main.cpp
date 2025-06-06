@@ -2,6 +2,7 @@
 #include <iostream>
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
+#include <emscripten/html5.h>
 
 static Game* gGame = nullptr;
 
@@ -17,8 +18,8 @@ int main(int argc, char** argv) {
     Game game;
 
     // Default dimensions (can be changed by external systems)
-    float width = 1080.0f;   // Default reference width
-    float height = 1920.0f;  // Default reference height
+    float width = 225;   // Default reference width
+    float height = 400;  // Default reference height
 
     // Example: Parse command line arguments for custom dimensions
     if (argc >= 3) {
@@ -33,11 +34,27 @@ int main(int argc, char** argv) {
         }
     }
 
+#ifdef __EMSCRIPTEN__
+    double widthD = width, heightD = height;
+
+
+    // The selector must include '#' when referring to an element by ID
+    EMSCRIPTEN_RESULT result = emscripten_get_element_css_size("#myCanvas", &widthD, &heightD);
+    if (result == EMSCRIPTEN_RESULT_SUCCESS) {
+        width = static_cast<float>(widthD);
+        height = static_cast<float>(heightD);
+        std::cout << "Canvas CSS size: " << width << " x " << height << "\n";
+    }
+    else {
+        std::cerr << "Failed to get CSS size of #myCanvas\n";
+    }
+#endif
+
     // Example: Different preset dimensions for testing
     // Uncomment any of these to test different screen sizes:
 
     // Phone portrait (9:16 aspect ratio)
-    width = 225; height = 400;
+    // width = 225; height = 400;
 
     // Tablet portrait (3:4 aspect ratio)
     // width = 768; height = 1024;
