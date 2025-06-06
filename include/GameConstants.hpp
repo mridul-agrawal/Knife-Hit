@@ -32,7 +32,7 @@ namespace GameConstants {
     const float REF_TARGET_Y_RATIO = 0.3f;
 
     // Target rotation speeds (degrees per second)
-    const float BASE_ROTATION_SPEED = 500.0f;
+    const float BASE_ROTATION_SPEED = 90.0f;
     const float ROTATION_SPEED_INCREMENT = 45.0f;
     const int LEVEL_FOR_REVERSE_ROTATION = 3;
 
